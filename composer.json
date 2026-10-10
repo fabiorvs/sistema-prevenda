@@ -11,7 +11,8 @@
     },
     "require": {
         "php": "^8.2",
-        "codeigniter4/framework": "^4.7"
+        "codeigniter4/framework": "^4.7",
+        "codeigniter4/shield": "^1.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
@@ -38,6 +39,7 @@
         "sort-packages": true
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit",
+        "serve": "PHP_CLI_SERVER_WORKERS=4 php spark serve --host 127.0.0.1 --port 8080"
     }
 }

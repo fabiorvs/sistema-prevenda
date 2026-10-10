@@ -1,3 +1,37 @@
+# Diecast Manager
+
+MVP multiusuário para acompanhar pré-vendas de miniaturas diecast. A Sprint 1 estabelece autenticação e isolamento por tenant; não inclui ainda vendedores, catálogo, pedidos ou financeiro.
+
+## Executar localmente
+
+1. Copie `env` para `.env` e preencha a conexão MySQL. Use uma URL válida, como `app.baseURL = 'http://localhost:8080/'`.
+2. Instale as dependências: `composer install`.
+3. Execute todas as migrations: `php spark migrate --all`.
+4. Inicie o servidor local com quatro workers: `composer serve`, depois abra `/register` em `http://127.0.0.1:8080`.
+
+O Shield fornece registro, login, logout, link mágico e fluxo de recuperação. O envio real de e-mail depende da configuração de `app/Config/Email.php` ou das variáveis de ambiente do provedor escolhido.
+
+## Tenancy e segurança
+
+- Ao registrar uma conta, o evento `register` cria, em transação, um tenant pessoal, a associação `owner` em `tenant_users` e preferências iniciais (BRL/America_Sao_Paulo).
+- O tenant ativo é obtido apenas da sessão e validado contra o usuário autenticado. Nenhuma rota recebe `tenant_id` fornecido pelo navegador.
+- A página inicial requer sessão válida e tenant ativo; quem não estiver autenticado é redirecionado ao login.
+- As chaves estrangeiras usam o tipo de `users.id` do Shield (`INT UNSIGNED`). IDs de tenants permanecem `BIGINT UNSIGNED`.
+
+## Validação
+
+```bash
+php spark migrate:status --all
+php spark routes
+vendor/bin/phpunit
+```
+
+## Próxima etapa
+
+Sprint 2: CRUD de vendedores e catálogo, sempre filtrado pelo tenant resolvido no servidor.
+
+---
+
 # CodeIgniter 4 Application Starter
 
 ## What is CodeIgniter?

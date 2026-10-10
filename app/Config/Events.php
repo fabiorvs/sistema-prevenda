@@ -55,3 +55,10 @@ Events::on('pre_system', static function (): void {
         }
     }
 });
+
+Events::on('register', static function ($user): void {
+    (new \App\Modules\Tenancy\Services\TenantProvisioner(db_connect()))->provision(
+        (int) $user->id,
+        $user->username ?? 'Minha coleção',
+    );
+});
