@@ -1,4 +1,77 @@
 <?= $this->include('partials/header') ?>
-<script>document.addEventListener('DOMContentLoaded',()=>{const input=document.querySelector('[name="new_product_brand[]"]');if(!input)return;const values=<?= json_encode(array_column($brands,'brand'), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;const select=document.createElement('select');select.name=input.name;select.className=input.className;const empty=new Option('Selecione uma marca','');select.add(empty);values.forEach(value=>select.add(new Option(value,value)));select.add(new Option('+ Nova marca','__new__'));const custom=document.createElement('input');custom.name='custom_product_brand[]';custom.className=input.className+' mt-2';custom.placeholder='Digite a nova marca';custom.hidden=true;select.addEventListener('change',()=>{custom.hidden=select.value!=='__new__';if(!custom.hidden)custom.focus()});input.replaceWith(select);select.after(custom)})</script>
-<main class="dc-content"><h1 class="dc-page-title">Nova pré-venda</h1><p class="dc-page-subtitle mb-4">Cadastre o carrinho e a foto sem sair deste pedido.</p><?php if(session('errors')): ?><div class="alert alert-danger"><?= implode('<br>',session('errors')) ?></div><?php endif ?>
-<form method="post" enctype="multipart/form-data" action="/pre-vendas" class="card card-body"><?= csrf_field() ?><div class="row g-3"><div class="col-md-6"><label class="form-label">Vendedor</label><select class="form-select" name="seller_id" required><option value="">Selecione</option><?php foreach($sellers as $seller): ?><option value="<?= $seller['id'] ?>"><?= esc($seller['name']) ?></option><?php endforeach ?></select></div><div class="col-md-3"><label class="form-label">Data do pedido</label><input class="form-control" type="date" name="order_date" value="<?= date('Y-m-d') ?>" required></div><div class="col-md-3"><label class="form-label">Previsão de entrega</label><input class="form-control" type="date" name="expected_delivery_date"></div></div><hr><h2 class="h5">Item da pré-venda</h2><div class="row g-2"><div class="col-md-4"><label class="form-label">Carrinho existente</label><select class="form-select" name="product_id[]"><option value="">Cadastrar novo abaixo</option><?php foreach($products as $product): ?><option value="<?= $product['id'] ?>"><?= esc($product['brand'].' — '.$product['name']) ?></option><?php endforeach ?></select></div><div class="col-md-2"><label class="form-label">Marca nova</label><input class="form-control" name="new_product_brand[]" placeholder="Mini GT"></div><div class="col-md-3"><label class="form-label">Modelo novo</label><input class="form-control" name="new_product_name[]" placeholder="Skyline GT-R"></div><div class="col-md-3"><label class="form-label">Foto do novo carrinho</label><input class="form-control" type="file" name="new_product_image" accept="image/jpeg,image/png,image/webp"></div><div class="col-md-2"><label class="form-label">Quantidade</label><input class="form-control" name="quantity[]" type="number" min="1" value="1" required></div><div class="col-md-3"><label class="form-label">Valor unitário</label><input class="form-control" name="unit_price[]" type="number" min="0" step="0.01" required></div></div><hr><div class="row g-3"><div class="col-md-3"><label class="form-label">Frete</label><input class="form-control" name="shipping_amount" type="number" min="0" step="0.01" value="0"></div><div class="col-md-3"><label class="form-label">Desconto</label><input class="form-control" name="discount_amount" type="number" min="0" step="0.01" value="0"></div><div class="col-md-3"><label class="form-label">Sinal pago</label><input class="form-control" name="down_payment_amount" type="number" min="0" step="0.01" value="0"></div><div class="col-md-3"><label class="form-label">Observações</label><input class="form-control" name="notes"></div></div><button class="btn btn-primary mt-4">Salvar pré-venda</button></form></main><?= $this->include('partials/footer') ?>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.querySelector('[name="new_product_brand[]"]');
+    if (!input) return;
+    const values =
+        <?= json_encode(array_column($brands,'brand'), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
+    const select = document.createElement('select');
+    select.name = input.name;
+    select.className = input.className;
+    const empty = new Option('Selecione uma marca', '');
+    select.add(empty);
+    values.forEach(value => select.add(new Option(value, value)));
+    select.add(new Option('+ Nova marca', '__new__'));
+    const custom = document.createElement('input');
+    custom.name = 'custom_product_brand[]';
+    custom.className = input.className + ' mt-2';
+    custom.placeholder = 'Digite a nova marca';
+    custom.hidden = true;
+    select.addEventListener('change', () => {
+        custom.hidden = select.value !== '__new__';
+        if (!custom.hidden) custom.focus()
+    });
+    input.replaceWith(select);
+    select.after(custom)
+})
+</script>
+<main class="dc-content">
+    <h1 class="dc-page-title">Nova pré-venda</h1>
+    <p class="dc-page-subtitle mb-4">Cadastre o carrinho e a foto sem sair deste pedido.</p>
+    <?php if(session('errors')): ?><div class="alert alert-danger"><?= implode('<br>',session('errors')) ?></div>
+    <?php endif ?>
+    <form method="post" enctype="multipart/form-data" action="/pre-vendas" class="card card-body"><?= csrf_field() ?>
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Vendedor</label><select class="form-select" name="seller_id"
+                    required>
+                    <option value="">Selecione</option><?php foreach($sellers as $seller): ?><option
+                        value="<?= $seller['id'] ?>"><?= esc($seller['name']) ?></option><?php endforeach ?>
+                </select></div>
+            <div class="col-md-3"><label class="form-label">Data do pedido</label><input class="form-control"
+                    type="date" name="order_date" value="<?= date('Y-m-d') ?>" required></div>
+            <div class="col-md-3"><label class="form-label">Previsão de entrega</label><input class="form-control"
+                    type="date" name="expected_delivery_date"></div>
+        </div>
+        <hr>
+        <h2 class="h5">Item da pré-venda</h2>
+        <div class="row g-2">
+            <div class="col-md-4"><label class="form-label">Carrinho existente</label><select class="form-select"
+                    name="product_id[]">
+                    <option value="">Cadastrar novo abaixo</option><?php foreach($products as $product): ?><option
+                        value="<?= $product['id'] ?>"><?= esc($product['brand'].' — '.$product['name']) ?></option>
+                    <?php endforeach ?>
+                </select></div>
+            <div class="col-md-2"><label class="form-label">Marca nova</label><input class="form-control"
+                    name="new_product_brand[]" placeholder="Mini GT"></div>
+            <div class="col-md-3"><label class="form-label">Modelo novo</label><input class="form-control"
+                    name="new_product_name[]" placeholder="Skyline GT-R"></div>
+            <div class="col-md-3"><label class="form-label">Foto do novo carrinho</label><input class="form-control"
+                    type="file" name="new_product_image" accept="image/jpeg,image/png,image/webp"></div>
+            <div class="col-md-2"><label class="form-label">Quantidade</label><input class="form-control"
+                    name="quantity[]" type="number" min="1" value="1" required></div>
+            <div class="col-md-3"><label class="form-label">Valor unitário</label><input class="form-control"
+                    name="unit_price[]" type="number" min="0" step="0.01" required></div>
+        </div>
+        <hr>
+        <div class="row g-3">
+            <div class="col-md-3"><label class="form-label">Frete</label><input class="form-control"
+                    name="shipping_amount" type="number" min="0" step="0.01" value="0"></div>
+            <div class="col-md-3"><label class="form-label">Desconto</label><input class="form-control"
+                    name="discount_amount" type="number" min="0" step="0.01" value="0"></div>
+            <div class="col-md-3"><label class="form-label">Sinal pago</label><input class="form-control"
+                    name="down_payment_amount" type="number" min="0" step="0.01" value="0"></div>
+            <div class="col-md-3"><label class="form-label">Observações</label><input class="form-control" name="notes">
+            </div>
+        </div><button class="btn btn-primary mt-4">Salvar pré-venda</button>
+    </form>
+</main><?= $this->include('partials/footer') ?>
