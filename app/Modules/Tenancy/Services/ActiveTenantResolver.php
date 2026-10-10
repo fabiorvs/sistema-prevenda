@@ -9,14 +9,20 @@ use CodeIgniter\Session\Session;
 
 final class ActiveTenantResolver
 {
-    public function __construct(private readonly ConnectionInterface $db, private readonly Session $session) {}
+    public function __construct(private readonly ConnectionInterface $db, private readonly Session $session)
+    {
+    }
 
     public function forUser(int $userId): ?int
     {
         $tenantId = $this->session->get('active_tenant_id');
-        if ($tenantId && $this->belongsToUser((int) $tenantId, $userId)) return (int) $tenantId;
+        if ($tenantId && $this->belongsToUser((int) $tenantId, $userId)) {
+            return (int) $tenantId;
+        }
         $row = $this->db->table('tenant_users')->select('tenant_id')->where(['user_id' => $userId, 'status' => 'active'])->orderBy('tenant_id')->get(1)->getRowArray();
-        if ($row === null) return null;
+        if ($row === null) {
+            return null;
+        }
         $this->session->set('active_tenant_id', (int) $row['tenant_id']);
         return (int) $row['tenant_id'];
     }

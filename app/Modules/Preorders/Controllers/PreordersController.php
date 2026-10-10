@@ -1,10 +1,99 @@
 <?php
+
 namespace App\Modules\Preorders\Controllers;
-use App\Controllers\BaseController; use App\Modules\Catalog\Models\ProductImageModel; use App\Modules\Preorders\Models\PreorderItemModel; use App\Modules\Preorders\Models\PreorderModel; use App\Modules\Tenancy\Services\ActiveTenantResolver;
-class PreordersController extends BaseController {
- private function tenant(): int{return (new ActiveTenantResolver(db_connect(),session()))->forUser((int)auth()->user()->id);}
- public function index(): string {$tenant=$this->tenant();$m=new PreorderModel();$rows=$m->select('preorders.*, sellers.name seller_name, COALESCE(SUM(preorder_items.quantity * preorder_items.unit_price),0) items_total')->join('sellers','sellers.id=preorders.seller_id')->join('preorder_items','preorder_items.preorder_id=preorders.id','left')->where('preorders.tenant_id',$tenant)->groupBy('preorders.id')->orderBy('preorders.expected_delivery_date IS NULL','ASC',false)->orderBy('preorders.expected_delivery_date','ASC')->paginate(15);$db=db_connect();foreach($rows as &$row){$item=$db->table('preorder_items')->select('products.name product_name, products.brand, product_images.id image_id')->join('products','products.id=preorder_items.product_id')->join('product_images','product_images.product_id=products.id AND product_images.is_primary=1','left')->where(['preorder_items.preorder_id'=>$row['id'],'preorder_items.tenant_id'=>$tenant])->orderBy('preorder_items.id')->get(1)->getRowArray();$row['product_name']=$item['product_name']??'Sem item';$row['brand']=$item['brand']??'';$row['image_id']=$item['image_id']??null;$row['total']=(float)$row['items_total']+(float)$row['shipping_amount']-(float)$row['discount_amount'];$row['balance']=$row['total']-(float)$row['down_payment_amount'];}return view('preorders/index',['preorders'=>$rows,'pager'=>$m->pager]);}
- public function create(): string {$tenant=$this->tenant();$db=db_connect();return view('preorders/form',['sellers'=>$db->table('sellers')->where('tenant_id',$tenant)->orderBy('name')->get()->getResultArray(),'products'=>$db->table('products')->where('tenant_id',$tenant)->orderBy('name')->get()->getResultArray(),'brands'=>$db->table('products')->select('brand')->where('tenant_id',$tenant)->where('brand !=','')->groupBy('brand')->orderBy('brand')->get()->getResultArray()]);}
- public function store(){ $rules=['seller_id'=>'required|is_natural_no_zero','order_date'=>'required|valid_date[Y-m-d]','quantity'=>'required','unit_price'=>'required','new_product_image'=>'if_exist|max_size[new_product_image,5120]|is_image[new_product_image]|mime_in[new_product_image,image/jpeg,image/png,image/webp]'];if(!$this->validate($rules))return redirect()->back()->withInput()->with('errors',$this->validator->getErrors());$tenant=$this->tenant();$db=db_connect();if(!$db->table('sellers')->where(['id'=>(int)$this->request->getPost('seller_id'),'tenant_id'=>$tenant])->countAllResults())return redirect()->back()->withInput()->with('errors',['seller_id'=>'Vendedor inválido.']);$products=(array)$this->request->getPost('product_id');$names=(array)$this->request->getPost('new_product_name');$brands=(array)$this->request->getPost('new_product_brand');$customBrands=(array)$this->request->getPost('custom_product_brand');$qty=(array)$this->request->getPost('quantity');$prices=(array)$this->request->getPost('unit_price');if(count($qty)!==count($prices)||count($qty)===0)return redirect()->back()->withInput()->with('errors',['items'=>'Inclua ao menos um item válido.']);$db->transStart();$reference='PV-'.str_pad((string)(int)(microtime(true)%100000),5,'0',STR_PAD_LEFT);$shipping=$this->money($this->request->getPost('shipping_amount'));$discount=$this->money($this->request->getPost('discount_amount'));$down=$this->money($this->request->getPost('down_payment_amount'));$m=new PreorderModel();$m->insert(['tenant_id'=>$tenant,'seller_id'=>(int)$this->request->getPost('seller_id'),'reference'=>$reference,'order_date'=>$this->request->getPost('order_date'),'expected_delivery_date'=>$this->request->getPost('expected_delivery_date')?:null,'status'=>'open','shipping_amount'=>$shipping,'discount_amount'=>$discount,'down_payment_amount'=>$down,'notes'=>$this->request->getPost('notes')]);$id=(int)$m->getInsertID();$items=new PreorderItemModel();foreach($qty as $i=>$amount){$productId=(int)($products[$i]??0);$isNew=false;$brand=trim((string)($brands[$i]??''));if($brand==='__new__')$brand=trim((string)($customBrands[$i]??''));if(!$productId && trim((string)($names[$i]??''))!==''){$db->table('products')->insert(['tenant_id'=>$tenant,'brand'=>$brand?:'Sem marca','name'=>trim($names[$i]),'created_at'=>gmdate('Y-m-d H:i:s'),'updated_at'=>gmdate('Y-m-d H:i:s')]);$productId=(int)$db->insertID();$isNew=true;}if(!$productId || !$db->table('products')->where(['id'=>$productId,'tenant_id'=>$tenant])->countAllResults())throw new \RuntimeException('Produto inválido.');if($isNew){$file=$this->request->getFile('new_product_image');if($file && $file->isValid() && !$file->hasMoved()){$dir=WRITEPATH.'uploads/products/'.$tenant;if(!is_dir($dir))mkdir($dir,0700,true);$filename=$file->getRandomName();$mime=$file->getMimeType();$size=$file->getSize();$file->move($dir,$filename);(new ProductImageModel())->insert(['tenant_id'=>$tenant,'product_id'=>$productId,'path'=>'products/'.$tenant.'/'.$filename,'mime_type'=>$mime,'size_bytes'=>$size,'sort_order'=>0,'is_primary'=>1]);}}$items->insert(['tenant_id'=>$tenant,'preorder_id'=>$id,'product_id'=>$productId,'quantity'=>max(1,(int)$amount),'unit_price'=>$this->money($prices[$i]),'status'=>'open']);}$db->table('preorder_status_history')->insert(['tenant_id'=>$tenant,'preorder_id'=>$id,'old_status'=>null,'new_status'=>'open','actor_user_id'=>(int)auth()->user()->id,'created_at'=>gmdate('Y-m-d H:i:s')]);$db->transComplete();if(!$db->transStatus())throw new \RuntimeException('Não foi possível salvar a pré-venda.');return redirect()->to('/pre-vendas')->with('message','Pré-venda criada.');}
- private function money($value): string{return number_format(max(0,(float)str_replace(',','.',(string)$value)),2,'.','');}
+
+use App\Controllers\BaseController;
+use App\Modules\Catalog\Models\ProductImageModel;
+use App\Modules\Preorders\Models\PreorderItemModel;
+use App\Modules\Preorders\Models\PreorderModel;
+use App\Modules\Tenancy\Services\ActiveTenantResolver;
+
+class PreordersController extends BaseController
+{
+    private function tenant(): int
+    {
+        return (new ActiveTenantResolver(db_connect(), session()))->forUser((int)auth()->user()->id);
+    }
+    public function index(): string
+    {
+        $tenant = $this->tenant();
+        $m = new PreorderModel();
+        $rows = $m->select('preorders.*, sellers.name seller_name, COALESCE(SUM(preorder_items.quantity * preorder_items.unit_price),0) items_total')->join('sellers', 'sellers.id=preorders.seller_id')->join('preorder_items', 'preorder_items.preorder_id=preorders.id', 'left')->where('preorders.tenant_id', $tenant)->groupBy('preorders.id')->orderBy('preorders.expected_delivery_date IS NULL', 'ASC', false)->orderBy('preorders.expected_delivery_date', 'ASC')->paginate(15);
+        $db = db_connect();
+        foreach ($rows as &$row) {
+            $item = $db->table('preorder_items')->select('products.name product_name, products.brand, product_images.id image_id')->join('products', 'products.id=preorder_items.product_id')->join('product_images', 'product_images.product_id=products.id AND product_images.is_primary=1', 'left')->where(['preorder_items.preorder_id' => $row['id'],'preorder_items.tenant_id' => $tenant])->orderBy('preorder_items.id')->get(1)->getRowArray();
+            $row['product_name'] = $item['product_name'] ?? 'Sem item';
+            $row['brand'] = $item['brand'] ?? '';
+            $row['image_id'] = $item['image_id'] ?? null;
+            $row['total'] = (float)$row['items_total'] + (float)$row['shipping_amount'] - (float)$row['discount_amount'];
+            $row['balance'] = $row['total'] - (float)$row['down_payment_amount'];
+        }return view('preorders/index', ['preorders' => $rows,'pager' => $m->pager]);
+    }
+    public function create(): string
+    {
+        $tenant = $this->tenant();
+        $db = db_connect();
+        return view('preorders/form', ['sellers' => $db->table('sellers')->where('tenant_id', $tenant)->orderBy('name')->get()->getResultArray(),'products' => $db->table('products')->where('tenant_id', $tenant)->orderBy('name')->get()->getResultArray(),'brands' => $db->table('products')->select('brand')->where('tenant_id', $tenant)->where('brand !=', '')->groupBy('brand')->orderBy('brand')->get()->getResultArray()]);
+    }
+    public function store()
+    {
+        $rules = ['seller_id' => 'required|is_natural_no_zero','order_date' => 'required|valid_date[Y-m-d]','quantity' => 'required','unit_price' => 'required','new_product_image' => 'if_exist|max_size[new_product_image,5120]|is_image[new_product_image]|mime_in[new_product_image,image/jpeg,image/png,image/webp]'];
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }$tenant = $this->tenant();
+        $db = db_connect();
+        if (!$db->table('sellers')->where(['id' => (int)$this->request->getPost('seller_id'),'tenant_id' => $tenant])->countAllResults()) {
+            return redirect()->back()->withInput()->with('errors', ['seller_id' => 'Vendedor inválido.']);
+        }$products = (array)$this->request->getPost('product_id');
+        $names = (array)$this->request->getPost('new_product_name');
+        $brands = (array)$this->request->getPost('new_product_brand');
+        $customBrands = (array)$this->request->getPost('custom_product_brand');
+        $qty = (array)$this->request->getPost('quantity');
+        $prices = (array)$this->request->getPost('unit_price');
+        if (count($qty) !== count($prices) || count($qty) === 0) {
+            return redirect()->back()->withInput()->with('errors', ['items' => 'Inclua ao menos um item válido.']);
+        }$db->transStart();
+        $reference = 'PV-'.str_pad((string)(int)(microtime(true) % 100000), 5, '0', STR_PAD_LEFT);
+        $shipping = $this->money($this->request->getPost('shipping_amount'));
+        $discount = $this->money($this->request->getPost('discount_amount'));
+        $down = $this->money($this->request->getPost('down_payment_amount'));
+        $m = new PreorderModel();
+        $m->insert(['tenant_id' => $tenant,'seller_id' => (int)$this->request->getPost('seller_id'),'reference' => $reference,'order_date' => $this->request->getPost('order_date'),'expected_delivery_date' => $this->request->getPost('expected_delivery_date') ?: null,'status' => 'open','shipping_amount' => $shipping,'discount_amount' => $discount,'down_payment_amount' => $down,'notes' => $this->request->getPost('notes')]);
+        $id = (int)$m->getInsertID();
+        $items = new PreorderItemModel();
+        foreach ($qty as $i => $amount) {
+            $productId = (int)($products[$i] ?? 0);
+            $isNew = false;
+            $brand = trim((string)($brands[$i] ?? ''));
+            if ($brand === '__new__') {
+                $brand = trim((string)($customBrands[$i] ?? ''));
+            }if (!$productId && trim((string)($names[$i] ?? '')) !== '') {
+                $db->table('products')->insert(['tenant_id' => $tenant,'brand' => $brand ?: 'Sem marca','name' => trim($names[$i]),'created_at' => gmdate('Y-m-d H:i:s'),'updated_at' => gmdate('Y-m-d H:i:s')]);
+                $productId = (int)$db->insertID();
+                $isNew = true;
+            }if (!$productId || !$db->table('products')->where(['id' => $productId,'tenant_id' => $tenant])->countAllResults()) {
+                throw new \RuntimeException('Produto inválido.');
+            }if ($isNew) {
+                $file = $this->request->getFile('new_product_image');
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $dir = WRITEPATH.'uploads/products/'.$tenant;
+                    if (!is_dir($dir)) {
+                        mkdir($dir, 0700, true);
+                    }$filename = $file->getRandomName();
+                    $mime = $file->getMimeType();
+                    $size = $file->getSize();
+                    $file->move($dir, $filename);
+                    (new ProductImageModel())->insert(['tenant_id' => $tenant,'product_id' => $productId,'path' => 'products/'.$tenant.'/'.$filename,'mime_type' => $mime,'size_bytes' => $size,'sort_order' => 0,'is_primary' => 1]);
+                }
+            }$items->insert(['tenant_id' => $tenant,'preorder_id' => $id,'product_id' => $productId,'quantity' => max(1, (int)$amount),'unit_price' => $this->money($prices[$i]),'status' => 'open']);
+        }$db->table('preorder_status_history')->insert(['tenant_id' => $tenant,'preorder_id' => $id,'old_status' => null,'new_status' => 'open','actor_user_id' => (int)auth()->user()->id,'created_at' => gmdate('Y-m-d H:i:s')]);
+        $db->transComplete();
+        if (!$db->transStatus()) {
+            throw new \RuntimeException('Não foi possível salvar a pré-venda.');
+        }return redirect()->to('/pre-vendas')->with('message', 'Pré-venda criada.');
+    }
+    private function money($value): string
+    {
+        return number_format(max(0, (float)str_replace(',', '.', (string)$value)), 2, '.', '');
+    }
 }
