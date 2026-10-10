@@ -22,4 +22,19 @@ class FinanceController extends BaseController
 
         return view('finance/index', ['entries' => $entries]);
     }
+
+    public function payments(): string
+    {
+        $tenantId = (new ActiveTenantResolver(db_connect(), session()))->forUser((int) auth()->user()->id);
+        $payments = db_connect()
+            ->table('payments')
+            ->select('payments.*, preorders.reference')
+            ->join('preorders', 'preorders.id=payments.preorder_id')
+            ->where('payments.tenant_id', $tenantId)
+            ->orderBy('payments.paid_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        return view('finance/payments', ['payments' => $payments]);
+    }
 }

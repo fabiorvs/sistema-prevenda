@@ -6,8 +6,10 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index', ['filter' => ['session', 'tenant']]);
 $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes): void {
     $routes->get('financeiro', '\\App\\Modules\\Finance\\Controllers\\FinanceController::index');
+    $routes->get('financeiro/pagamentos', '\\App\\Modules\\Finance\\Controllers\\FinanceController::payments');
     $routes->get('financeiro/contas/(:num)/pagamento', '\\App\\Modules\\Finance\\Controllers\\PaymentsController::create/$1');
     $routes->post('financeiro/contas/(:num)/pagamento', '\\App\\Modules\\Finance\\Controllers\\PaymentsController::store/$1');
+    $routes->post('financeiro/pagamentos/(:num)/estorno', '\\App\\Modules\\Finance\\Controllers\\PaymentsController::refund/$1');
     $routes->get('pre-vendas', '\\App\\Modules\\Preorders\\Controllers\\PreordersController::index');
     $routes->get('pre-vendas/nova', '\\App\\Modules\\Preorders\\Controllers\\PreordersController::create');
     $routes->post('pre-vendas', '\\App\\Modules\\Preorders\\Controllers\\PreordersController::store');

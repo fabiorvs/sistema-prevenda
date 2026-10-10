@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Modules\Catalog\Models\ProductImageModel;
 use App\Modules\Preorders\Models\PreorderItemModel;
 use App\Modules\Preorders\Models\PreorderModel;
+use App\Modules\Finance\Services\FinancialEntryService;
 use App\Modules\Tenancy\Services\ActiveTenantResolver;
 
 class PreordersController extends BaseController
@@ -87,6 +88,7 @@ class PreordersController extends BaseController
                 }
             }$items->insert(['tenant_id' => $tenant,'preorder_id' => $id,'product_id' => $productId,'quantity' => max(1, (int)$amount),'unit_price' => $this->money($prices[$i]),'status' => 'open']);
         }$db->table('preorder_status_history')->insert(['tenant_id' => $tenant,'preorder_id' => $id,'old_status' => null,'new_status' => 'open','actor_user_id' => (int)auth()->user()->id,'created_at' => gmdate('Y-m-d H:i:s')]);
+        (new FinancialEntryService($db))->createForPreorder($tenant, $id);
         $db->transComplete();
         if (!$db->transStatus()) {
             throw new \RuntimeException('Não foi possível salvar a pré-venda.');

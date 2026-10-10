@@ -89,6 +89,37 @@ class PaymentsController extends BaseController
         return redirect()->to('/financeiro')->with('message', 'Pagamento registrado.');
     }
 
+    public function refund(int $paymentId)
+    {
+        $db = db_connect();
+        $payment = $db->table('payments')->where(['id' => $paymentId, 'tenant_id' => $this->tenant(), 'type' => 'payment', 'status' => 'confirmed'])->get()->getRowArray();
+        if (! $payment) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        $alreadyRefunded = $db->table('payments')->where(['tenant_id' => $this->tenant(), 'type' => 'refund', 'notes' => 'Estorno do pagamento #' . $paymentId])->countAllResults();
+        if ($alreadyRefunded > 0) {
+            return redirect()->to('/financeiro/pagamentos')->with('error', 'Este pagamento já foi estornado.');
+        }
+
+        $db->transStart();
+        $now = gmdate('Y-m-d H:i:s');
+        $db->table('payments')->insert([
+            'tenant_id' => $this->tenant(), 'preorder_id' => $payment['preorder_id'], 'amount' => $payment['amount'], 'type' => 'refund', 'category' => $payment['category'], 'method' => $payment['method'], 'status' => 'confirmed', 'paid_at' => $now, 'idempotency_key' => bin2hex(random_bytes(16)), 'notes' => 'Estorno do pagamento #' . $paymentId, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $allocations = $db->table('payment_allocations')->where('payment_id', $paymentId)->get()->getResultArray();
+        foreach ($allocations as $allocation) {
+            $db->table('financial_entries')->where('id', $allocation['financial_entry_id'])->update(['status' => 'pending', 'updated_at' => $now]);
+        }
+        $db->transComplete();
+
+        if (! $db->transStatus()) {
+            throw new \RuntimeException('Não foi possível estornar o pagamento.');
+        }
+
+        return redirect()->to('/financeiro/pagamentos')->with('message', 'Pagamento estornado.');
+    }
+
     private function entry(int $id): array
     {
         $entry = db_connect()->table('financial_entries')->where(['id' => $id, 'tenant_id' => $this->tenant()])->get()->getRowArray();
