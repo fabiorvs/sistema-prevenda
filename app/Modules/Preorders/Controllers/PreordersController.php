@@ -93,7 +93,51 @@ final class PreordersController extends BaseController
                 ->get()
                 ->getResultArray(),
             'filters' => ['seller_id' => $sellerId],
+            'sellerSummary' => $this->sellerSummary($tenantId),
         ]);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function sellerSummary(int $tenantId): array
+    {
+        return db_connect()->table('preorders')
+            ->select(
+                'sellers.name AS seller_name, '
+                . 'COALESCE(SUM(item_totals.quantity), 0) AS items, '
+                . 'COALESCE(SUM(item_totals.total), 0) AS total, '
+                . 'COALESCE(SUM(preorders.down_payment_amount), 0) + COALESCE(SUM(payment_totals.paid), 0) AS paid',
+                false,
+            )
+            ->join('sellers', 'sellers.id = preorders.seller_id')
+            ->join(
+                '(SELECT preorder_id, SUM(quantity) AS quantity, SUM(quantity * unit_price) AS total '
+                . 'FROM preorder_items GROUP BY preorder_id) item_totals',
+                'item_totals.preorder_id = preorders.id',
+                'left',
+                false,
+            )
+            ->join(
+                '(SELECT financial_entries.preorder_id, SUM(payment_allocations.amount) AS paid '
+                . 'FROM financial_entries '
+                . 'JOIN payment_allocations ON payment_allocations.financial_entry_id = financial_entries.id '
+                . 'GROUP BY financial_entries.preorder_id) payment_totals',
+                'payment_totals.preorder_id = preorders.id',
+                'left',
+                false,
+            )
+            ->where('preorders.tenant_id', $tenantId)
+            ->whereNotIn('preorders.status', [
+                DeliveryStatus::AWAITING_SHIPMENT,
+                DeliveryStatus::IN_TRANSIT,
+                DeliveryStatus::DELIVERED,
+                DeliveryStatus::CANCELED,
+            ])
+            ->groupBy(['sellers.id', 'sellers.name'])
+            ->orderBy('sellers.name')
+            ->get()
+            ->getResultArray();
     }
 
     public function show(int $id): string

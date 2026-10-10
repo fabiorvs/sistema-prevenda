@@ -24,6 +24,41 @@ $preorderStatusLabels = [
         <div class="alert alert-success"><?= esc(session('message')) ?></div>
     <?php endif ?>
 
+    <?php if ($sellerSummary !== []): ?>
+        <div class="row g-3 mb-3">
+            <?php foreach ($sellerSummary as $summary): ?>
+                <?php $balance = max(0, (float) $summary['total'] - (float) $summary['paid']); ?>
+                <div class="col-md-6 col-xl-4">
+                    <section class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <span class="dc-stat-icon purple position-static flex-shrink-0">
+                                    <i class="bi bi-shop"></i>
+                                </span>
+                                <div>
+                                    <h2 class="dc-panel-title"><?= esc($summary['seller_name']) ?></h2>
+                                    <p class="dc-list-meta mb-0"><?= (int) $summary['items'] ?> miniatura(s) em pré-venda</p>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-secondary">Acumulado</span>
+                                <strong>R$ <?= number_format((float) $summary['total'], 2, ',', '.') ?></strong>
+                            </div>
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-secondary">Pago</span>
+                                <strong class="text-success">R$ <?= number_format((float) $summary['paid'], 2, ',', '.') ?></strong>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-secondary">Falta pagar</span>
+                                <strong class="text-danger">R$ <?= number_format($balance, 2, ',', '.') ?></strong>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            <?php endforeach ?>
+        </div>
+    <?php endif ?>
+
     <form class="card dc-filter-bar mb-3" method="get" action="/pre-vendas">
         <div class="row g-2 align-items-end">
             <div class="col-md-5">
