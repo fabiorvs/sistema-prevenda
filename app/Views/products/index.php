@@ -1,5 +1,5 @@
 <?= $this->include('partials/header') ?><main class="dc-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="dc-page-heading">
         <div>
             <h1 class="dc-page-title">Carrinhos</h1>
             <p class="dc-page-subtitle">Seu catálogo pessoal de modelos.</p>
@@ -9,8 +9,8 @@
             placeholder="Pesquisar por modelo ou marca..."></form>
     <div class="row g-3"><?php foreach($products as $p): ?><div class="col-sm-6 col-lg-3">
             <article class="card h-100 overflow-hidden"><?php if($p['image_id']): ?><img
-                    src="/imagens/carrinhos/<?= $p['image_id'] ?>" class="card-img-top"
-                    style="height:150px;object-fit:cover" alt="<?= esc($p['name']) ?>"><?php endif ?><div
+                    src="/imagens/carrinhos/<?= $p['image_id'] ?>" class="dc-product-image"
+                    alt="<?= esc($p['name']) ?>"><?php else: ?><div class="dc-empty-image"><i class="bi bi-car-front"></i></div><?php endif ?><div
                     class="card-body"><span class="badge text-bg-light"><?= esc($p['brand']) ?></span>
                     <h2 class="h6 mt-2"><?= esc($p['name']) ?></h2><small
                         class="text-secondary d-block mb-2"><?= esc($p['scale'] ?? '') ?>

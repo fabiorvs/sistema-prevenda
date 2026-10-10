@@ -50,49 +50,6 @@ final class DeliveryService
     }
 
     /**
-     * @param array{status:string, tracking_code?:string, expected_delivery_date?:string, actual_delivery_date?:string, notes?:string} $data
-     */
-    public function updateStatus(int $tenantId, int $preorderId, int $actorUserId, array $data): void
-    {
-        $order = $this->findOrder($tenantId, $preorderId);
-
-        if ($order === null) {
-            throw new \InvalidArgumentException('Pré-venda não encontrada.');
-        }
-
-        $newStatus = $data['status'];
-        if (! DeliveryStatus::isValid($newStatus)) {
-            throw new \InvalidArgumentException('Status logístico inválido.');
-        }
-        if (in_array($newStatus, [DeliveryStatus::PARTIALLY_RECEIVED, DeliveryStatus::RECEIVED], true)) {
-            throw new \InvalidArgumentException('Use o formulário de recebimento para marcar itens como recebidos.');
-        }
-
-        $this->db->transStart();
-        $now = gmdate('Y-m-d H:i:s');
-        $actualDate = $data['actual_delivery_date'] ?: null;
-        $expectedDate = $data['expected_delivery_date'] ?: null;
-        $trackingCode = trim((string) ($data['tracking_code'] ?? '')) ?: null;
-
-        $this->db->table('preorders')
-            ->where(['id' => $preorderId, 'tenant_id' => $tenantId])
-            ->update([
-                'status' => $newStatus,
-                'tracking_code' => $trackingCode,
-                'expected_delivery_date' => $expectedDate,
-                'actual_delivery_date' => $actualDate,
-                'updated_at' => $now,
-            ]);
-
-        $this->recordEvent($tenantId, $preorderId, null, (string) $order['status'], $newStatus, 0, $trackingCode, $expectedDate, $actualDate, $data['notes'] ?? null, $actorUserId, $now);
-        $this->db->transComplete();
-
-        if (! $this->db->transStatus()) {
-            throw new \RuntimeException('Não foi possível atualizar a entrega.');
-        }
-    }
-
-    /**
      * @param array<int, int|string> $quantities
      * @param array{tracking_code?:string, expected_delivery_date?:string, actual_delivery_date?:string, notes?:string} $data
      */
@@ -202,4 +159,5 @@ final class DeliveryService
             'created_at' => $createdAt,
         ]);
     }
+
 }

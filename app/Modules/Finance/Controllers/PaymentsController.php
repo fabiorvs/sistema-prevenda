@@ -15,7 +15,22 @@ class PaymentsController extends BaseController
 
     public function create(int $entryId): string
     {
-        return view('finance/payment_form', ['entry' => $this->entry($entryId)]);
+        $entry = $this->entry($entryId);
+        $allocated = (float) (db_connect()
+            ->table('payment_allocations')
+            ->selectSum('amount')
+            ->where('financial_entry_id', $entry['id'])
+            ->get()
+            ->getRowArray()['amount'] ?? 0);
+        $entry['remaining'] = max(0, (float) $entry['amount'] - $allocated);
+        $returnTo = $this->request->getGet('retorno') === 'pre-venda'
+            ? '/pre-vendas/' . $entry['preorder_id']
+            : '/financeiro';
+
+        return view('finance/payment_form', [
+            'entry' => $entry,
+            'returnTo' => $returnTo,
+        ]);
     }
 
     public function store(int $entryId)
@@ -86,7 +101,13 @@ class PaymentsController extends BaseController
             throw new \RuntimeException('Não foi possível registrar o pagamento.');
         }
 
-        return redirect()->to('/financeiro')->with('message', 'Pagamento registrado.');
+        $returnTo = (string) $this->request->getPost('return_to');
+        $allowedReturnTo = '/pre-vendas/' . $entry['preorder_id'];
+        if ($returnTo !== $allowedReturnTo) {
+            $returnTo = '/financeiro';
+        }
+
+        return redirect()->to($returnTo)->with('message', 'Pagamento registrado.');
     }
 
     public function refund(int $paymentId)

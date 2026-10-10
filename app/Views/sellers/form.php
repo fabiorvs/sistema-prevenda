@@ -1,5 +1,11 @@
 <?= $this->include('partials/header') ?><main class="dc-content">
-    <h1 class="dc-page-title mb-3"><?= $seller ? 'Editar vendedor' : 'Novo vendedor' ?></h1>
+    <div class="dc-page-heading">
+        <div>
+            <a class="dc-panel-link" href="/vendedores">← Voltar para vendedores</a>
+            <h1 class="dc-page-title mt-2"><?= $seller ? 'Editar vendedor' : 'Novo vendedor' ?></h1>
+            <p class="dc-page-subtitle">Dados de contato e identificação da loja.</p>
+        </div>
+    </div>
     <?php if(session('errors')): ?><div class="alert alert-danger"><?= implode('<br>',session('errors')) ?></div>
     <?php endif ?><form method="post" enctype="multipart/form-data"
         action="<?= $seller ? '/vendedores/'.$seller['id'] : '/vendedores' ?>" class="card card-body">

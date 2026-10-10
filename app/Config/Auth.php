@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types = 1);
 
 /**
  * This file is part of CodeIgniter Shield.
@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Config;
 
-use CodeIgniter\Shield\Config\Auth as ShieldAuth;
 use CodeIgniter\Shield\Authentication\Actions\ActionInterface;
 use CodeIgniter\Shield\Authentication\AuthenticatorInterface;
 use CodeIgniter\Shield\Authentication\Authenticators\AccessTokens;
@@ -23,8 +22,8 @@ use CodeIgniter\Shield\Authentication\Authenticators\Session;
 use CodeIgniter\Shield\Authentication\Passwords\CompositionValidator;
 use CodeIgniter\Shield\Authentication\Passwords\DictionaryValidator;
 use CodeIgniter\Shield\Authentication\Passwords\NothingPersonalValidator;
-use CodeIgniter\Shield\Authentication\Passwords\PwnedValidator;
 use CodeIgniter\Shield\Authentication\Passwords\ValidatorInterface;
+use CodeIgniter\Shield\Config\Auth as ShieldAuth;
 use CodeIgniter\Shield\Models\UserModel;
 
 class Auth extends ShieldAuth
@@ -35,7 +34,7 @@ class Auth extends ShieldAuth
      * ////////////////////////////////////////////////////////////////////
      */
 
-    // Constants for Record Login Attempts. Do not change.
+                                                   // Constants for Record Login Attempts. Do not change.
     public const RECORD_LOGIN_ATTEMPT_NONE    = 0; // Do not record at all
     public const RECORD_LOGIN_ATTEMPT_FAILURE = 1; // Record only failures
     public const RECORD_LOGIN_ATTEMPT_ALL     = 2; // Record all login attempts
@@ -46,8 +45,10 @@ class Auth extends ShieldAuth
      * --------------------------------------------------------------------
      */
     public array $views = [
-        'login'                       => '\CodeIgniter\Shield\Views\login',
-        'register'                    => '\CodeIgniter\Shield\Views\register',
+        // 'login'                       => '\CodeIgniter\Shield\Views\login',
+        // 'register'                    => '\CodeIgniter\Shield\Views\register',
+        'login'                       => 'auth/login',
+        'register'                    => 'auth/register',
         'layout'                      => '\CodeIgniter\Shield\Views\layout',
         'action_email_2fa'            => '\CodeIgniter\Shield\Views\email_2fa_show',
         'action_email_2fa_verify'     => '\CodeIgniter\Shield\Views\email_2fa_verify',
@@ -361,8 +362,8 @@ class Auth extends ShieldAuth
      */
     public int $hashMemoryCost = 65536; // PASSWORD_ARGON2_DEFAULT_MEMORY_COST;
 
-    public int $hashTimeCost = 4;   // PASSWORD_ARGON2_DEFAULT_TIME_COST;
-    public int $hashThreads  = 1;   // PASSWORD_ARGON2_DEFAULT_THREADS;
+    public int $hashTimeCost = 4; // PASSWORD_ARGON2_DEFAULT_TIME_COST;
+    public int $hashThreads  = 1; // PASSWORD_ARGON2_DEFAULT_THREADS;
 
     /**
      * --------------------------------------------------------------------

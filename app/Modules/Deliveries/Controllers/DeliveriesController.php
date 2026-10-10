@@ -7,6 +7,8 @@ namespace App\Modules\Deliveries\Controllers;
 use App\Controllers\BaseController;
 use App\Modules\Deliveries\Services\DeliveryService;
 use App\Modules\Deliveries\Services\DeliveryStatus;
+use App\Modules\Deliveries\Services\ShipmentService;
+use App\Modules\Deliveries\Services\ShipmentStatus;
 use App\Modules\Tenancy\Services\ActiveTenantResolver;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
@@ -28,7 +30,9 @@ final class DeliveriesController extends BaseController
             ->join('sellers', 'sellers.id = preorders.seller_id')
             ->join('preorder_items', 'preorder_items.preorder_id = preorders.id')
             ->where('preorders.tenant_id', $tenantId)
+            ->where('preorders.status !=', DeliveryStatus::CANCELED)
             ->groupBy('preorders.id')
+            ->having('SUM(preorder_items.received_quantity) < SUM(preorder_items.quantity)', null, false)
             ->orderBy('preorders.expected_delivery_date IS NULL', 'ASC', false)
             ->orderBy('preorders.expected_delivery_date', 'ASC');
 
@@ -39,13 +43,15 @@ final class DeliveriesController extends BaseController
         if ($late) {
             $query
                 ->where('preorders.expected_delivery_date <', date('Y-m-d'))
-                ->whereNotIn('preorders.status', [DeliveryStatus::RECEIVED, DeliveryStatus::CANCELED]);
+                ->whereNotIn('preorders.status', [DeliveryStatus::DELIVERED, DeliveryStatus::CANCELED]);
         }
 
         return view('deliveries/index', [
             'orders' => $query->get()->getResultArray(),
             'labels' => DeliveryStatus::labels(),
             'filters' => ['status' => $status, 'late' => $late],
+            'shipments' => (new ShipmentService(db_connect()))->all($tenantId),
+            'shipmentLabels' => ShipmentStatus::labels(),
         ]);
     }
 
@@ -55,34 +61,6 @@ final class DeliveriesController extends BaseController
             'order' => $this->order($id),
             'labels' => DeliveryStatus::labels(),
         ]);
-    }
-
-    public function updateStatus(int $id)
-    {
-        $rules = [
-            'status' => 'required',
-            'expected_delivery_date' => 'permit_empty|valid_date[Y-m-d]',
-            'actual_delivery_date' => 'permit_empty|valid_date[Y-m-d]',
-            'tracking_code' => 'permit_empty|max_length[120]',
-            'notes' => 'permit_empty|max_length[2000]',
-        ];
-
-        if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
-        }
-
-        try {
-            $this->service()->updateStatus(
-                $this->tenant(),
-                $id,
-                (int) auth()->user()->id,
-                $this->request->getPost(['status', 'tracking_code', 'expected_delivery_date', 'actual_delivery_date', 'notes']),
-            );
-        } catch (\InvalidArgumentException $exception) {
-            return redirect()->back()->withInput()->with('errors', ['status' => $exception->getMessage()]);
-        }
-
-        return redirect()->to('/entregas/' . $id)->with('message', 'Status logístico atualizado.');
     }
 
     public function receive(int $id)
@@ -110,7 +88,7 @@ final class DeliveriesController extends BaseController
             return redirect()->back()->withInput()->with('errors', ['received' => $exception->getMessage()]);
         }
 
-        return redirect()->to('/entregas/' . $id)->with('message', 'Recebimento registrado. O financeiro não foi alterado.');
+        return redirect()->to('/entregas')->with('message', 'Chegada ao vendedor registrada.');
     }
 
     /**

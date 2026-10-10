@@ -4,8 +4,12 @@
 $today = date('Y-m-d');
 $isLate = $order['expected_delivery_date']
     && $order['expected_delivery_date'] < $today
-    && ! in_array($order['status'], ['received', 'canceled'], true);
+    && ! in_array($order['status'], ['received', 'delivered', 'canceled'], true);
 $statusLabel = $labels[$order['status']] ?? 'Aguardando lançamento';
+$pendingItems = array_filter(
+    $order['items'],
+    static fn (array $item): bool => (int) $item['received_quantity'] < (int) $item['quantity'],
+);
 ?>
 
 <main class="dc-content">
@@ -29,10 +33,13 @@ $statusLabel = $labels[$order['status']] ?? 'Aguardando lançamento';
 
     <div class="row g-4">
         <div class="col-lg-7">
-            <section class="card mb-4">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">Recebimento de itens</h2>
-                    <p class="text-secondary small">Registrar uma entrega não altera pagamentos, saldo ou contas a pagar.</p>
+            <?php if ($pendingItems !== []): ?>
+                <section class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Chegada ao vendedor</h2>
+                        <p class="text-secondary small">
+                            Marque aqui as miniaturas que já chegaram ao vendedor e poderão entrar em um envio agrupado.
+                        </p>
                     <form method="post" action="/entregas/<?= $order['id'] ?>/recebimento">
                         <?= csrf_field() ?>
                         <div class="table-responsive">
@@ -41,12 +48,12 @@ $statusLabel = $labels[$order['status']] ?? 'Aguardando lançamento';
                                     <tr>
                                         <th>Item</th>
                                         <th>Comprado</th>
-                                        <th>Recebido</th>
-                                        <th>Receber agora</th>
+                                        <th>No vendedor</th>
+                                        <th>Marcar chegada</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($order['items'] as $item): ?>
+                                    <?php foreach ($pendingItems as $item): ?>
                                         <?php $pending = (int) $item['quantity'] - (int) $item['received_quantity']; ?>
                                         <tr>
                                             <td>
@@ -63,7 +70,6 @@ $statusLabel = $labels[$order['status']] ?? 'Aguardando lançamento';
                                                     max="<?= $pending ?>"
                                                     value="0"
                                                     name="received[<?= $item['id'] ?>]"
-                                                    <?= $pending === 0 ? 'disabled' : '' ?>
                                                 >
                                             </td>
                                         </tr>
@@ -73,7 +79,7 @@ $statusLabel = $labels[$order['status']] ?? 'Aguardando lançamento';
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label" for="receipt_actual_date">Data do recebimento</label>
+                                <label class="form-label" for="receipt_actual_date">Data da chegada</label>
                                 <input class="form-control" id="receipt_actual_date" type="date" name="actual_delivery_date" value="<?= date('Y-m-d') ?>">
                             </div>
                             <div class="col-md-4">
@@ -89,48 +95,22 @@ $statusLabel = $labels[$order['status']] ?? 'Aguardando lançamento';
                                 <textarea class="form-control" id="receipt_notes" name="notes" rows="2"></textarea>
                             </div>
                         </div>
-                        <button class="btn btn-primary mt-4">Confirmar recebimento</button>
+                        <button class="btn btn-primary mt-4">Confirmar chegada ao vendedor</button>
                     </form>
-                </div>
-            </section>
+                    </div>
+                </section>
+            <?php else: ?>
+                <section class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-2">Chegada confirmada</h2>
+                        <p class="text-secondary mb-3">Todas as miniaturas desta pré-venda já estão disponíveis no vendedor.</p>
+                        <a class="btn btn-primary" href="/entregas/envios/novo?seller_id=<?= (int) $order['seller_id'] ?>">
+                            <i class="bi bi-box-seam me-1"></i> Organizar envio
+                        </a>
+                    </div>
+                </section>
+            <?php endif ?>
 
-            <section class="card">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">Atualizar status logístico</h2>
-                    <form method="post" action="/entregas/<?= $order['id'] ?>/status">
-                        <?= csrf_field() ?>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label" for="status">Status</label>
-                                <select class="form-select" id="status" name="status" required>
-                                    <?php foreach ($labels as $value => $label): ?>
-                                        <option value="<?= esc($value) ?>" <?= $order['status'] === $value ? 'selected' : '' ?>>
-                                            <?= esc($label) ?>
-                                        </option>
-                                    <?php endforeach ?>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label" for="tracking_code">Código de rastreio</label>
-                                <input class="form-control" id="tracking_code" name="tracking_code" value="<?= esc($order['tracking_code'] ?? '') ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label" for="expected_delivery_date">Previsão de entrega</label>
-                                <input class="form-control" id="expected_delivery_date" type="date" name="expected_delivery_date" value="<?= esc($order['expected_delivery_date'] ?? '') ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label" for="actual_delivery_date">Data real de entrega</label>
-                                <input class="form-control" id="actual_delivery_date" type="date" name="actual_delivery_date" value="<?= esc($order['actual_delivery_date'] ?? '') ?>">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label" for="status_notes">Observações</label>
-                                <textarea class="form-control" id="status_notes" name="notes" rows="2"></textarea>
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-primary mt-4">Salvar status</button>
-                    </form>
-                </div>
-            </section>
         </div>
 
         <div class="col-lg-5">

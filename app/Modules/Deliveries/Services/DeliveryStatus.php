@@ -12,6 +12,7 @@ final class DeliveryStatus
     public const IN_TRANSIT = 'in_transit';
     public const PARTIALLY_RECEIVED = 'partially_received';
     public const RECEIVED = 'received';
+    public const DELIVERED = 'delivered';
     public const CANCELED = 'canceled';
 
     /**
@@ -22,10 +23,11 @@ final class DeliveryStatus
         return [
             self::RESERVED => 'Reservado',
             self::AWAITING_RELEASE => 'Aguardando lançamento',
-            self::AWAITING_SHIPMENT => 'Aguardando envio',
+            self::AWAITING_SHIPMENT => 'Envio preparado',
             self::IN_TRANSIT => 'Em transporte',
-            self::PARTIALLY_RECEIVED => 'Parcialmente recebido',
-            self::RECEIVED => 'Recebido',
+            self::PARTIALLY_RECEIVED => 'Chegada parcial ao vendedor',
+            self::RECEIVED => 'Disponível no vendedor',
+            self::DELIVERED => 'Recebido por você',
             self::CANCELED => 'Cancelado',
         ];
     }
@@ -61,6 +63,6 @@ final class DeliveryStatus
 
     public static function isFinal(string $status): bool
     {
-        return in_array($status, [self::RECEIVED, self::CANCELED], true);
+        return in_array($status, [self::DELIVERED, self::CANCELED], true);
     }
 }

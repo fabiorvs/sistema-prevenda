@@ -1,7 +1,7 @@
 <?= $this->include('partials/header') ?>
 
 <main class="dc-content">
-    <div class="d-flex justify-content-between align-items-start mb-4">
+    <div class="dc-page-heading">
         <div>
             <h1 class="dc-page-title">Super Admin</h1>
             <p class="dc-page-subtitle">Gerencie contas e acesso da plataforma, sem abrir dados privados dos tenants.</p>

@@ -1,35 +1,6 @@
 <?= $this->include('partials/header') ?>
-<style>
-.dc-seller-image {
-    height: 165px;
-    width: 100%;
-    object-fit: contain;
-    background: #fff;
-    padding: 18px
-}
-
-.dc-seller-placeholder {
-    height: 165px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 42px;
-    background: linear-gradient(135deg, #eef1f7, #e5e9f1)
-}
-
-.dc-pagination .pagination {
-    gap: 5px
-}
-
-.dc-pagination .page-link {
-    border-radius: 7px;
-    border: 1px solid #e7eaf1;
-    color: #44506a;
-    padding: 7px 12px
-}
-</style>
 <main class="dc-content">
-    <div class="d-flex justify-content-between align-items-start mb-4">
+    <div class="dc-page-heading">
         <div>
             <h1 class="dc-page-title">Vendedores</h1>
             <p class="dc-page-subtitle">Gerencie seus vendedores e lojas.</p>

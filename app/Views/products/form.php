@@ -1,6 +1,12 @@
 <?= $this->include('partials/header') ?>
-<main class="container py-4">
-    <h1 class="h3"><?= $product ? 'Editar carrinho' : 'Novo carrinho' ?></h1>
+<main class="dc-content">
+    <div class="dc-page-heading">
+        <div>
+            <a class="dc-panel-link" href="/carrinhos">← Voltar para carrinhos</a>
+            <h1 class="dc-page-title mt-2"><?= $product ? 'Editar carrinho' : 'Novo carrinho' ?></h1>
+            <p class="dc-page-subtitle">Informações e foto do modelo.</p>
+        </div>
+    </div>
     <?php if (session('errors')): ?><div class="alert alert-danger"><?= implode('<br>', session('errors')) ?></div>
     <?php endif ?>
     <form method="post" action="<?= $product ? '/carrinhos/'.$product['id'] : '/carrinhos' ?>"

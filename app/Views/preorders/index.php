@@ -1,38 +1,19 @@
 <?= $this->include('partials/header') ?>
-<style>
-.preorder-image {
-    height: 150px;
-    width: 100%;
-    object-fit: cover;
-    background: #eef1f6
-}
-
-.preorder-placeholder {
-    height: 150px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #eef1f6;
-    font-size: 42px
-}
-
-.preorder-meta {
-    font-size: 13px;
-    color: #6e7890
-}
-
-.preorder-money {
-    font-weight: 800;
-    font-size: 18px
-}
-
-.preorder-balance {
-    color: #d43b4b;
-    font-weight: 700
-}
-</style>
+<?php
+$preorderStatusLabels = [
+    'reserved' => 'Reservado',
+    'awaiting_release' => 'Aguardando lançamento',
+    'awaiting_shipment' => 'Aguardando envio',
+    'in_transit' => 'Em transporte',
+    'partially_received' => 'Chegada parcial ao vendedor',
+    'received' => 'Disponível no vendedor',
+    'delivered' => 'Recebido por você',
+    'canceled' => 'Cancelado',
+    'open' => 'Em aberto',
+];
+?>
 <main class="dc-content">
-    <div class="d-flex justify-content-between align-items-start mb-4">
+    <div class="dc-page-heading">
         <div>
             <h1 class="dc-page-title">Pré-vendas</h1>
             <p class="dc-page-subtitle">Ordenadas pela próxima previsão de entrega.</p>
@@ -44,7 +25,7 @@
                     alt="<?= esc($order['product_name']) ?>"><?php else: ?><div class="preorder-placeholder">🚘</div>
                 <?php endif ?><div class="card-body">
                     <div class="d-flex justify-content-between gap-2">
-                        <span class="badge text-bg-warning"><?= esc(str_replace('_', ' ', $order['status'])) ?></span>
+                        <span class="badge text-bg-warning"><?= esc($preorderStatusLabels[$order['status']] ?? $order['status']) ?></span>
                         <small class="text-secondary"><?= esc($order['reference']) ?></small>
                     </div>
                     <h2 class="h5 mt-3 mb-1"><?= esc($order['product_name']) ?></h2>
@@ -58,9 +39,15 @@
                             <?= number_format((float)$order['down_payment_amount'],2,',','.') ?></span></div>
                     <div class="d-flex justify-content-between mt-2"><span class="preorder-meta">Falta pagar</span><span
                             class="preorder-balance">R$ <?= number_format($order['balance'],2,',','.') ?></span></div>
-                    <a class="btn btn-outline-primary btn-sm w-100 mt-3" href="/entregas/<?= $order['id'] ?>">
-                        Gerenciar entrega
-                    </a>
+                    <div class="d-flex gap-2 mt-3">
+                        <a class="btn btn-primary btn-sm flex-grow-1" href="/pre-vendas/<?= $order['id'] ?>">
+                            Ver detalhes
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm" href="/entregas/<?= $order['id'] ?>"
+                            aria-label="Gerenciar entrega">
+                            <i class="bi bi-box-seam"></i>
+                        </a>
+                    </div>
                 </div>
             </article>
         </div><?php endforeach ?></div><?php if($preorders === []): ?><div class="text-center text-secondary py-5">
