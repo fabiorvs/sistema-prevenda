@@ -112,6 +112,7 @@ final class GarageController extends BaseController
         $quantity = (int) $this->request->getPost('quantity');
         $unitPrice = $this->money($this->request->getPost('unit_price'));
         $initialPayment = $this->money($this->request->getPost('initial_payment'));
+        $acquiredAt = (string) $this->request->getPost('acquired_at');
         $total = $quantity * $unitPrice;
         if ($initialPayment > $total) {
             return redirect()->back()->withInput()->with('errors', ['initial_payment' => 'O pagamento inicial não pode exceder o valor total.']);
@@ -139,7 +140,7 @@ final class GarageController extends BaseController
             'product_id' => $productId,
             'quantity' => $quantity,
             'unit_price' => number_format($unitPrice, 2, '.', ''),
-            'acquired_at' => $this->request->getPost('acquired_at'),
+            'acquired_at' => $acquiredAt,
             'next_payment_date' => $this->request->getPost('next_payment_date') ?: null,
             'status' => 'stored',
             'notes' => $this->request->getPost('notes'),
@@ -152,7 +153,9 @@ final class GarageController extends BaseController
                 'garage_item_id' => $itemId,
                 'amount' => number_format($initialPayment, 2, '.', ''),
                 'method' => $this->request->getPost('payment_method') ?: 'pix',
-                'paid_at' => $now,
+                // Para lançamentos retroativos, o pagamento inicial pertence à data
+                // da compra informada, não ao momento em que foi cadastrado no sistema.
+                'paid_at' => $acquiredAt . ' ' . date('H:i:s'),
                 'notes' => 'Pagamento inicial',
             ]);
         }

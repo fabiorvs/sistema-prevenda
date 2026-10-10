@@ -25,8 +25,9 @@ final class PreordersController extends BaseController
     public function index(): string
     {
         $tenantId = $this->tenant();
+        $sellerId = (int) $this->request->getGet('seller_id');
         $model = new PreorderModel();
-        $preorders = $model
+        $query = $model
             ->select('preorders.*, sellers.name AS seller_name, COALESCE(SUM(preorder_items.quantity * preorder_items.unit_price), 0) AS items_total', false)
             ->join('sellers', 'sellers.id = preorders.seller_id')
             ->join('preorder_items', 'preorder_items.preorder_id = preorders.id', 'left')
@@ -37,7 +38,13 @@ final class PreordersController extends BaseController
                 DeliveryStatus::DELIVERED,
                 DeliveryStatus::CANCELED,
             ])
-            ->groupBy('preorders.id')
+            ->groupBy('preorders.id');
+
+        if ($sellerId > 0) {
+            $query->where('preorders.seller_id', $sellerId);
+        }
+
+        $preorders = $query
             ->orderBy('preorders.expected_delivery_date IS NULL', 'ASC', false)
             ->orderBy('preorders.expected_delivery_date', 'ASC')
             ->paginate(15);
@@ -80,6 +87,12 @@ final class PreordersController extends BaseController
         return view('preorders/index', [
             'preorders' => $preorders,
             'pager' => $model->pager,
+            'sellers' => $db->table('sellers')
+                ->where('tenant_id', $tenantId)
+                ->orderBy('name')
+                ->get()
+                ->getResultArray(),
+            'filters' => ['seller_id' => $sellerId],
         ]);
     }
 

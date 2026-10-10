@@ -558,17 +558,29 @@ body {
 }
 
 .dc-pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 32px;
+    min-height: 32px;
     border: 1px solid var(--dc-border);
     border-radius: 6px;
+    background-color: #fff;
     color: #566177;
     font-size: 12px;
     text-align: center;
 }
 
-.pagination .active .page-link {
+.dc-pagination .page-link:hover {
+    border-color: var(--dc-primary);
+    background-color: #f0eeff;
+    color: var(--dc-primary);
+}
+
+.dc-pagination .page-item.active .page-link {
     border-color: var(--dc-primary);
     background: var(--dc-primary);
+    color: #fff;
 }
 
 .dc-detail-heading {
