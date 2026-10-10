@@ -14,10 +14,18 @@ $routes->group('admin', ['filter' => ['session', 'superadmin']], static function
 });
 $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes): void {
     $routes->get('dashboard', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::index');
+    $routes->get('perfil', '\\App\\Modules\\Profile\\Controllers\\ProfileController::index');
+    $routes->post('perfil', '\\App\\Modules\\Profile\\Controllers\\ProfileController::update');
+    $routes->post('perfil/senha', '\\App\\Modules\\Profile\\Controllers\\ProfileController::password');
     $routes->get('dashboard/exportar', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::export');
     $routes->get('colecao', '\\App\\Modules\\Collection\\Controllers\\CollectionController::index');
     $routes->post('colecao/(:num)/localizacao', '\\App\\Modules\\Collection\\Controllers\\CollectionController::updateLocation/$1');
+    $routes->post('colecao/(:num)/fotos', '\\App\\Modules\\Collection\\Controllers\\CollectionController::addPhoto/$1');
+    $routes->get('anexos/(:num)', '\\App\\Modules\\Attachments\\Controllers\\AttachmentsController::download/$1');
     $routes->get('historico', '\\App\\Modules\\History\\Controllers\\HistoryController::index');
+    $routes->get('compras', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::index');
+    $routes->get('compras/nova', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::create');
+    $routes->post('compras', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::store');
     $routes->get('entregas', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::index');
     $routes->get('entregas/envios/novo', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::create');
     $routes->post('entregas/envios', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::store');
@@ -36,6 +44,7 @@ $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes
     $routes->post('garagem', '\\App\\Modules\\Garage\\Controllers\\GarageController::store');
     $routes->get('garagem/(:num)', '\\App\\Modules\\Garage\\Controllers\\GarageController::show/$1');
     $routes->post('garagem/(:num)/pagamentos', '\\App\\Modules\\Garage\\Controllers\\GarageController::addPayment/$1');
+    $routes->post('garagem/(:num)/anexos', '\\App\\Modules\\Attachments\\Controllers\\AttachmentsController::storeGarage/$1');
     $routes->post('garagem/(:num)/status', '\\App\\Modules\\Garage\\Controllers\\GarageController::updateStatus/$1');
     $routes->post('garagem/(:num)/editar', '\\App\\Modules\\Garage\\Controllers\\GarageController::update/$1');
     $routes->get('pre-vendas', '\\App\\Modules\\Preorders\\Controllers\\PreordersController::index');
@@ -46,6 +55,7 @@ $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes
     $routes->post('pre-vendas/(:num)/chegada-completa', '\\App\\Modules\\Preorders\\Controllers\\PreordersController::markCompleteArrival/$1');
     $routes->post('pre-vendas/(:num)/cancelar', '\\App\\Modules\\Preorders\\Controllers\\PreordersController::cancel/$1');
     $routes->post('pre-vendas/(:num)/editar', '\\App\\Modules\\Preorders\\Controllers\\PreordersController::update/$1');
+    $routes->post('pre-vendas/(:num)/anexos', '\\App\\Modules\\Attachments\\Controllers\\AttachmentsController::storePreorder/$1');
     $routes->get('vendedores', '\\App\\Modules\\Sellers\\Controllers\\SellersController::index');
     $routes->get('vendedores/novo', '\\App\\Modules\\Sellers\\Controllers\\SellersController::create');
     $routes->post('vendedores', '\\App\\Modules\\Sellers\\Controllers\\SellersController::store');

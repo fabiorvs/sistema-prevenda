@@ -170,6 +170,11 @@ final class PreordersController extends BaseController
             ->orderBy('id', 'DESC')
             ->get()
             ->getResultArray();
+        $attachments = $db->table('attachments')
+            ->where(['tenant_id' => $tenantId, 'owner_type' => 'preorder', 'owner_id' => $id])
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getResultArray();
 
         $itemsTotal = 0.0;
         foreach ($preorder['items'] as $item) {
@@ -199,6 +204,7 @@ final class PreordersController extends BaseController
             'financialEntry' => $financialEntry,
             'payments' => $payments,
             'statusHistory' => $statusHistory,
+            'attachments' => $attachments,
             'statusLabels' => DeliveryStatus::labels(),
         ]);
     }

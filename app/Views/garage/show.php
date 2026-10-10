@@ -186,6 +186,30 @@ $statusClass = match ($item['status']) {
         </div>
 
         <div class="col-lg-5">
+            <section class="card mb-3">
+                <div class="card-body">
+                    <h2 class="dc-panel-title mb-2">Arquivos e comprovantes</h2>
+                    <p class="text-secondary small">Anexe fotos do pedido ou comprovantes de pagamento.</p>
+                    <form method="post" enctype="multipart/form-data" action="/garagem/<?= $item['id'] ?>/anexos">
+                        <?= csrf_field() ?>
+                        <div class="input-group">
+                            <input class="form-control form-control-sm" type="file" name="attachment" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+                            <button class="btn btn-outline-primary btn-sm" type="submit">Anexar</button>
+                        </div>
+                    </form>
+                    <?php if ($attachments !== []): ?>
+                        <div class="mt-3 d-grid gap-2">
+                            <?php foreach ($attachments as $attachment): ?>
+                                <a class="dc-panel-link" href="/anexos/<?= $attachment['id'] ?>" target="_blank" rel="noopener">
+                                    <i class="bi <?= str_starts_with($attachment['mime_type'], 'image/') ? 'bi-image' : 'bi-file-earmark-pdf' ?>"></i>
+                                    <?= esc($attachment['original_name']) ?>
+                                </a>
+                            <?php endforeach ?>
+                        </div>
+                    <?php endif ?>
+                </div>
+            </section>
+
             <section class="card">
                 <div class="card-body">
                     <h2 class="dc-panel-title mb-2">Logística</h2>

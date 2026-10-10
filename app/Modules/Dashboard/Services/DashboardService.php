@@ -52,6 +52,7 @@ final class DashboardService
             'monthly' => $this->monthly($orders, $garageItems),
             'upcoming_deliveries' => $this->upcomingDeliveries($orders),
             'upcoming_due' => $this->upcomingDue($tenantId, $sellerId),
+            'alerts' => $this->alerts($tenantId),
         ];
     }
 
@@ -216,5 +217,19 @@ final class DashboardService
         usort($entries, static fn (array $left, array $right): int => strcmp((string) ($left['due_date'] ?? '9999-12-31'), (string) ($right['due_date'] ?? '9999-12-31')));
 
         return array_slice($entries, 0, 5);
+    }
+
+    /** @return list<array{type:string,label:string,description:string,url:string}> */
+    private function alerts(int $tenantId): array
+    {
+        $today = date('Y-m-d');
+        $alerts = [];
+        $overdue = $this->db->table('financial_entries')->where('tenant_id', $tenantId)->whereIn('status', ['pending', 'partial'])->where('due_date <', $today)->countAllResults();
+        if ($overdue > 0) $alerts[] = ['type' => 'danger', 'label' => $overdue . ' pagamento(s) vencido(s)', 'description' => 'Existem parcelas com data de vencimento anterior a hoje.', 'url' => '/financeiro?status=overdue'];
+        $lateShipments = $this->db->table('shipments')->where('tenant_id', $tenantId)->where('status', 'shipped')->where('expected_delivery_date <', $today)->countAllResults();
+        if ($lateShipments > 0) $alerts[] = ['type' => 'danger', 'label' => $lateShipments . ' envio(s) atrasado(s)', 'description' => 'A previsão de entrega já passou.', 'url' => '/entregas?late=1'];
+        $waiting = $this->db->table('preorders')->where('tenant_id', $tenantId)->where('status', 'awaiting_shipment')->where('updated_at <', date('Y-m-d H:i:s', strtotime('-14 days')))->countAllResults();
+        if ($waiting > 0) $alerts[] = ['type' => 'warning', 'label' => $waiting . ' item(ns) aguardando envio', 'description' => 'Estão disponíveis no vendedor há mais de 14 dias.', 'url' => '/entregas'];
+        return $alerts;
     }
 }

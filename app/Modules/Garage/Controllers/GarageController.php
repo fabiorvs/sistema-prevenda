@@ -176,10 +176,16 @@ final class GarageController extends BaseController
             ->orderBy('paid_at', 'DESC')
             ->get()
             ->getResultArray();
+        $attachments = db_connect()->table('attachments')
+            ->where(['tenant_id' => $this->tenant(), 'owner_type' => 'garage', 'owner_id' => $id])
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getResultArray();
 
         return view('garage/show', [
             'item' => $item,
             'payments' => $payments,
+            'attachments' => $attachments,
             'labels' => GarageStatus::labels(),
         ]);
     }

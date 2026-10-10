@@ -36,6 +36,7 @@ $isActive = static function (string $path) use ($currentPath): string {
                 <a class="<?= $isActive('vendedores') ?>" href="/vendedores"><i class="bi bi-people"></i>Vendedores</a>
                 <a class="<?= $isActive('carrinhos') ?>" href="/carrinhos"><i class="bi bi-car-front-fill"></i>Carrinhos</a>
                 <a class="<?= $isActive('garagem') ?>" href="/garagem"><i class="bi bi-p-square"></i>Garagem</a>
+                <a class="<?= $isActive('compras') ?>" href="/compras"><i class="bi bi-bag-check"></i>Compras</a>
                 <a class="<?= $isActive('colecao') ?>" href="/colecao"><i class="bi bi-grid-3x3-gap"></i>Coleção</a>
                 <a class="<?= $isActive('financeiro') ?>" href="/financeiro"><i class="bi bi-wallet2"></i>Financeiro</a>
                 <a class="<?= $isActive('entregas') ?>" href="/entregas"><i class="bi bi-box-seam"></i>Entregas</a>
@@ -45,6 +46,7 @@ $isActive = static function (string $path) use ($currentPath): string {
                     <a class="<?= $isActive('admin') ?>" href="/admin"><i class="bi bi-shield-lock"></i>Administração</a>
                 <?php endif ?>
                 <span class="dc-nav-label">Conta</span>
+                <a class="<?= $isActive('perfil') ?>" href="/perfil"><i class="bi bi-person-circle"></i>Meu perfil</a>
                 <a href="<?= url_to('logout') ?>"><i class="bi bi-box-arrow-left"></i>Sair</a>
             </nav>
         </aside>

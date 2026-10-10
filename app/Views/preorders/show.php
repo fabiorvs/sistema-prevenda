@@ -410,6 +410,21 @@ $canRegisterPayment = $preorder['status'] !== 'canceled'
                 </div>
             </div>
             <div class="dc-file-grid">
+                <form class="card card-body" method="post" enctype="multipart/form-data" action="/pre-vendas/<?= $preorder['id'] ?>/anexos">
+                    <?= csrf_field() ?>
+                    <label class="form-label" for="preorder_attachment">Anexar comprovante ou foto do pedido</label>
+                    <div class="input-group">
+                        <input class="form-control" id="preorder_attachment" type="file" name="attachment" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+                        <button class="btn btn-primary" type="submit">Anexar</button>
+                    </div>
+                    <small class="text-secondary mt-2">JPG, PNG, WEBP ou PDF de até 5 MB.</small>
+                </form>
+                <?php foreach ($attachments as $attachment): ?>
+                    <a href="/anexos/<?= $attachment['id'] ?>" target="_blank" rel="noopener">
+                        <i class="bi <?= str_starts_with($attachment['mime_type'], 'image/') ? 'bi-image' : 'bi-file-earmark-pdf' ?>"></i>
+                        <span><?= esc($attachment['original_name']) ?></span>
+                    </a>
+                <?php endforeach ?>
                 <?php foreach ($preorder['items'] as $item): ?>
                     <?php if (! empty($item['image_id'])): ?>
                         <a href="/imagens/carrinhos/<?= $item['image_id'] ?>" target="_blank" rel="noopener">
@@ -425,7 +440,7 @@ $canRegisterPayment = $preorder['status'] !== 'canceled'
                         <span>Comprovante(s) armazenado(s)</span>
                     </div>
                 <?php endif ?>
-                <?php if (! $hasProof && array_filter(array_column($preorder['items'], 'image_id')) === []): ?>
+                <?php if ($attachments === [] && ! $hasProof && array_filter(array_column($preorder['items'], 'image_id')) === []): ?>
                     <p class="text-secondary mb-0">Nenhum arquivo vinculado.</p>
                 <?php endif ?>
             </div>

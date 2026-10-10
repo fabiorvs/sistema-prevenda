@@ -73,6 +73,26 @@
         </div>
     </div>
 
+    <?php if ($alerts !== []): ?>
+        <section class="card border-warning mb-3">
+            <div class="card-body">
+                <h2 class="dc-panel-title mb-3"><i class="bi bi-bell me-1"></i> Requer atenção</h2>
+                <div class="row g-2">
+                    <?php foreach ($alerts as $alert): ?>
+                        <div class="col-md-4">
+                            <a class="text-decoration-none" href="<?= esc($alert['url']) ?>">
+                                <div class="border rounded-3 p-3 h-100 <?= $alert['type'] === 'danger' ? 'border-danger' : 'border-warning' ?>">
+                                    <strong class="d-block <?= $alert['type'] === 'danger' ? 'text-danger' : 'text-warning-emphasis' ?>"><?= esc($alert['label']) ?></strong>
+                                    <span class="small text-secondary"><?= esc($alert['description']) ?></span>
+                                </div>
+                            </a>
+                        </div>
+                    <?php endforeach ?>
+                </div>
+            </div>
+        </section>
+    <?php endif ?>
+
     <div class="row g-3 mb-3">
         <div class="col-xl-8">
             <section class="card h-100">
