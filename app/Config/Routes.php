@@ -19,6 +19,7 @@ $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes
     $routes->post('perfil/senha', '\\App\\Modules\\Profile\\Controllers\\ProfileController::password');
     $routes->get('dashboard/exportar', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::export');
     $routes->get('colecao', '\\App\\Modules\\Collection\\Controllers\\CollectionController::index');
+    $routes->get('colecao/(:num)', '\\App\\Modules\\Collection\\Controllers\\CollectionController::show/$1');
     $routes->post('colecao/(:num)/localizacao', '\\App\\Modules\\Collection\\Controllers\\CollectionController::updateLocation/$1');
     $routes->post('colecao/(:num)/fotos', '\\App\\Modules\\Collection\\Controllers\\CollectionController::addPhoto/$1');
     $routes->get('anexos/(:num)', '\\App\\Modules\\Attachments\\Controllers\\AttachmentsController::download/$1');

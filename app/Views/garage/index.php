@@ -94,7 +94,10 @@
                             <small class="text-secondary"><?= (int) $item['quantity'] ?> un.</small>
                         </div>
                         <h2 class="h6 mb-1"><?= esc($item['product_name']) ?></h2>
-                        <p class="dc-list-meta mb-3"><?= esc($item['brand']) ?> · <?= esc($item['seller_name']) ?></p>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                            <span class="dc-list-meta"><?= esc($item['brand']) ?></span>
+                            <span class="dc-seller-tag"><i class="bi bi-shop"></i><?= esc($item['seller_name']) ?></span>
+                        </div>
                         <div class="d-flex justify-content-between small mb-1">
                             <span class="text-secondary">Total</span>
                             <strong>R$ <?= number_format((float) $item['total'], 2, ',', '.') ?></strong>

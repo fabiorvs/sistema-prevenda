@@ -93,7 +93,10 @@ $preorderStatusLabels = [
                         <small class="text-secondary"><?= esc($order['reference']) ?></small>
                     </div>
                     <h2 class="h5 mt-3 mb-1"><?= esc($order['product_name']) ?></h2>
-                    <p class="preorder-meta mb-3"><?= esc($order['brand']) ?> · <?= esc($order['seller_name']) ?></p>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <span class="preorder-meta"><?= esc($order['brand']) ?></span>
+                        <span class="dc-seller-tag"><i class="bi bi-shop"></i><?= esc($order['seller_name']) ?></span>
+                    </div>
                     <div class="d-flex justify-content-between border-top pt-3"><span class="preorder-meta">Entrega
                             prevista</span><strong><?= $order['expected_delivery_date'] ? esc(date('d/m/Y',strtotime($order['expected_delivery_date']))) : 'Não informada' ?></strong>
                     </div>

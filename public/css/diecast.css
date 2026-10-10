@@ -165,6 +165,18 @@ body {
     font-weight: 800;
 }
 
+.dc-profile-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.dc-profile-link:hover .dc-user {
+    color: var(--dc-primary);
+}
+
 .dc-user-block {
     min-width: 92px;
     line-height: 1.15;
@@ -550,6 +562,18 @@ body {
     margin: 2px 0 0;
     color: var(--dc-muted);
     font-size: 10px;
+}
+
+.dc-seller-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: #eeecff;
+    color: #4f46e5;
+    font-size: 10px;
+    font-weight: 750;
 }
 
 .dc-pagination .pagination {

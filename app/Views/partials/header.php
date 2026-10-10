@@ -55,9 +55,11 @@ $isActive = static function (string $path) use ($currentPath): string {
                 <button class="dc-topbar-icon" type="button" aria-label="Notificações">
                     <i class="bi bi-bell"></i>
                 </button>
-                <span class="dc-avatar" aria-hidden="true"><?= esc($initial) ?></span>
-                <span class="dc-user-block">
-                    <span class="dc-user"><?= esc($username) ?></span>
-                    <span class="dc-user-role"><?= $user?->inGroup('superadmin') ? 'Super Admin' : 'Colecionador' ?></span>
-                </span>
+                <a class="dc-profile-link" href="/perfil" aria-label="Abrir meu perfil">
+                    <span class="dc-avatar" aria-hidden="true"><?= esc($initial) ?></span>
+                    <span class="dc-user-block">
+                        <span class="dc-user"><?= esc($username) ?></span>
+                        <span class="dc-user-role"><?= $user?->inGroup('superadmin') ? 'Super Admin' : 'Colecionador' ?></span>
+                    </span>
+                </a>
             </header>
