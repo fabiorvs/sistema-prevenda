@@ -5,6 +5,8 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index', ['filter' => ['session', 'tenant']]);
 $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes): void {
+    $routes->get('dashboard', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::index');
+    $routes->get('dashboard/exportar', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::export');
     $routes->get('financeiro', '\\App\\Modules\\Finance\\Controllers\\FinanceController::index');
     $routes->get('financeiro/pagamentos', '\\App\\Modules\\Finance\\Controllers\\FinanceController::payments');
     $routes->get('financeiro/contas/(:num)/pagamento', '\\App\\Modules\\Finance\\Controllers\\PaymentsController::create/$1');

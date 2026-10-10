@@ -107,8 +107,17 @@ class PaymentsController extends BaseController
         $db->table('payments')->insert([
             'tenant_id' => $this->tenant(), 'preorder_id' => $payment['preorder_id'], 'amount' => $payment['amount'], 'type' => 'refund', 'category' => $payment['category'], 'method' => $payment['method'], 'status' => 'confirmed', 'paid_at' => $now, 'idempotency_key' => bin2hex(random_bytes(16)), 'notes' => 'Estorno do pagamento #' . $paymentId, 'created_at' => $now, 'updated_at' => $now,
         ]);
+        $refundId = (int) $db->insertID();
         $allocations = $db->table('payment_allocations')->where('payment_id', $paymentId)->get()->getResultArray();
         foreach ($allocations as $allocation) {
+            $db->table('payment_allocations')->insert([
+                'tenant_id' => $this->tenant(),
+                'payment_id' => $refundId,
+                'financial_entry_id' => $allocation['financial_entry_id'],
+                'amount' => -1 * (float) $allocation['amount'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
             $db->table('financial_entries')->where('id', $allocation['financial_entry_id'])->update(['status' => 'pending', 'updated_at' => $now]);
         }
         $db->transComplete();
