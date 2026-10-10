@@ -266,7 +266,7 @@ final class GarageController extends BaseController
     private function itemsQuery(int $tenantId): GarageItemModel
     {
         return (new GarageItemModel())
-            ->select('garage_items.*, sellers.name AS seller_name, products.brand, products.name AS product_name, products.scale, product_images.id AS image_id, COALESCE(SUM(garage_payments.amount), 0) AS paid, garage_items.quantity * garage_items.unit_price AS total', false)
+            ->select('garage_items.*, sellers.name AS seller_name, products.brand, products.name AS product_name, products.scale, MAX(product_images.id) AS image_id, COALESCE(SUM(garage_payments.amount), 0) AS paid, garage_items.quantity * garage_items.unit_price AS total', false)
             ->join('sellers', 'sellers.id = garage_items.seller_id')
             ->join('products', 'products.id = garage_items.product_id')
             ->join('product_images', 'product_images.product_id = products.id AND product_images.is_primary = 1', 'left')

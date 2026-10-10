@@ -237,7 +237,7 @@ final class ShipmentService
     private function eligibleGarage(int $tenantId, int $sellerId): array
     {
         $items = $this->db->table('garage_items')
-            ->select('garage_items.*, products.name AS product_name, products.brand, products.scale, product_images.id AS image_id, COALESCE(SUM(garage_payments.amount), 0) AS paid_amount', false)
+            ->select('garage_items.*, products.name AS product_name, products.brand, products.scale, MAX(product_images.id) AS image_id, COALESCE(SUM(garage_payments.amount), 0) AS paid_amount', false)
             ->join('products', 'products.id = garage_items.product_id')
             ->join('product_images', 'product_images.product_id = products.id AND product_images.is_primary = 1', 'left')
             ->join('garage_payments', 'garage_payments.garage_item_id = garage_items.id', 'left')
