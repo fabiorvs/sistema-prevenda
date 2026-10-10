@@ -7,6 +7,10 @@ $routes->get('/', 'Home::index', ['filter' => ['session', 'tenant']]);
 $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes): void {
     $routes->get('dashboard', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::index');
     $routes->get('dashboard/exportar', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::export');
+    $routes->get('entregas', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::index');
+    $routes->get('entregas/(:num)', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::show/$1');
+    $routes->post('entregas/(:num)/status', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::updateStatus/$1');
+    $routes->post('entregas/(:num)/recebimento', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::receive/$1');
     $routes->get('financeiro', '\\App\\Modules\\Finance\\Controllers\\FinanceController::index');
     $routes->get('financeiro/pagamentos', '\\App\\Modules\\Finance\\Controllers\\FinanceController::payments');
     $routes->get('financeiro/contas/(:num)/pagamento', '\\App\\Modules\\Finance\\Controllers\\PaymentsController::create/$1');

@@ -43,8 +43,10 @@
                     src="/imagens/carrinhos/<?= $order['image_id'] ?>"
                     alt="<?= esc($order['product_name']) ?>"><?php else: ?><div class="preorder-placeholder">🚘</div>
                 <?php endif ?><div class="card-body">
-                    <div class="d-flex justify-content-between gap-2"><span class="badge text-bg-warning">Em
-                            aberto</span><small class="text-secondary"><?= esc($order['reference']) ?></small></div>
+                    <div class="d-flex justify-content-between gap-2">
+                        <span class="badge text-bg-warning"><?= esc(str_replace('_', ' ', $order['status'])) ?></span>
+                        <small class="text-secondary"><?= esc($order['reference']) ?></small>
+                    </div>
                     <h2 class="h5 mt-3 mb-1"><?= esc($order['product_name']) ?></h2>
                     <p class="preorder-meta mb-3"><?= esc($order['brand']) ?> · <?= esc($order['seller_name']) ?></p>
                     <div class="d-flex justify-content-between border-top pt-3"><span class="preorder-meta">Entrega
@@ -56,6 +58,9 @@
                             <?= number_format((float)$order['down_payment_amount'],2,',','.') ?></span></div>
                     <div class="d-flex justify-content-between mt-2"><span class="preorder-meta">Falta pagar</span><span
                             class="preorder-balance">R$ <?= number_format($order['balance'],2,',','.') ?></span></div>
+                    <a class="btn btn-outline-primary btn-sm w-100 mt-3" href="/entregas/<?= $order['id'] ?>">
+                        Gerenciar entrega
+                    </a>
                 </div>
             </article>
         </div><?php endforeach ?></div><?php if($preorders === []): ?><div class="text-center text-secondary py-5">

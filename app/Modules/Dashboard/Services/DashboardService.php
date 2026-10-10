@@ -116,7 +116,12 @@ final class DashboardService
     /** @param list<array<string, mixed>> $orders @return list<array<string, mixed>> */
     private function upcomingDeliveries(array $orders): array
     {
-        $orders = array_filter($orders, static fn (array $order): bool => ! empty($order['expected_delivery_date']) && $order['actual_delivery_date'] === null);
+        $orders = array_filter(
+            $orders,
+            static fn (array $order): bool => ! empty($order['expected_delivery_date'])
+                && $order['actual_delivery_date'] === null
+                && ! in_array($order['status'], ['received', 'canceled'], true),
+        );
         usort($orders, static fn (array $left, array $right): int => strcmp((string) $left['expected_delivery_date'], (string) $right['expected_delivery_date']));
         return array_slice($orders, 0, 5);
     }

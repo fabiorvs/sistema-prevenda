@@ -59,7 +59,7 @@ class PreordersController extends BaseController
         $discount = $this->money($this->request->getPost('discount_amount'));
         $down = $this->money($this->request->getPost('down_payment_amount'));
         $m = new PreorderModel();
-        $m->insert(['tenant_id' => $tenant,'seller_id' => (int)$this->request->getPost('seller_id'),'reference' => $reference,'order_date' => $this->request->getPost('order_date'),'expected_delivery_date' => $this->request->getPost('expected_delivery_date') ?: null,'status' => 'open','shipping_amount' => $shipping,'discount_amount' => $discount,'down_payment_amount' => $down,'notes' => $this->request->getPost('notes')]);
+        $m->insert(['tenant_id' => $tenant,'seller_id' => (int)$this->request->getPost('seller_id'),'reference' => $reference,'order_date' => $this->request->getPost('order_date'),'expected_delivery_date' => $this->request->getPost('expected_delivery_date') ?: null,'status' => 'awaiting_release','shipping_amount' => $shipping,'discount_amount' => $discount,'down_payment_amount' => $down,'notes' => $this->request->getPost('notes')]);
         $id = (int)$m->getInsertID();
         $items = new PreorderItemModel();
         foreach ($qty as $i => $amount) {
@@ -87,7 +87,7 @@ class PreordersController extends BaseController
                     (new ProductImageModel())->insert(['tenant_id' => $tenant,'product_id' => $productId,'path' => 'products/'.$tenant.'/'.$filename,'mime_type' => $mime,'size_bytes' => $size,'sort_order' => 0,'is_primary' => 1]);
                 }
             }$items->insert(['tenant_id' => $tenant,'preorder_id' => $id,'product_id' => $productId,'quantity' => max(1, (int)$amount),'unit_price' => $this->money($prices[$i]),'status' => 'open']);
-        }$db->table('preorder_status_history')->insert(['tenant_id' => $tenant,'preorder_id' => $id,'old_status' => null,'new_status' => 'open','actor_user_id' => (int)auth()->user()->id,'created_at' => gmdate('Y-m-d H:i:s')]);
+        }$db->table('preorder_status_history')->insert(['tenant_id' => $tenant,'preorder_id' => $id,'old_status' => null,'new_status' => 'awaiting_release','actor_user_id' => (int)auth()->user()->id,'created_at' => gmdate('Y-m-d H:i:s')]);
         (new FinancialEntryService($db))->createForPreorder($tenant, $id);
         $db->transComplete();
         if (!$db->transStatus()) {
