@@ -1,7 +1,6 @@
 <?= $this->include('partials/header') ?>
 
 <?php
-$financeTab = 'accounts';
 $statusLabels = [
     'paid' => ['Pago', 'text-bg-success'],
     'partial' => ['Parcial', 'text-bg-primary'],
@@ -11,13 +10,14 @@ $statusLabels = [
 ?>
 
 <main class="dc-content">
-    <?= $this->include('finance/tabs') ?>
-
     <div class="dc-page-heading">
         <div>
-            <h1 class="dc-page-title">Contas a pagar</h1>
-            <p class="dc-page-subtitle">Parcelas, pagamentos pendentes e valores guardados na garagem.</p>
+            <h1 class="dc-page-title">Financeiro</h1>
+            <p class="dc-page-subtitle">Acompanhe contas de pré-vendas, Garagem, pagamentos e o saldo a investir.</p>
         </div>
+        <a class="btn btn-outline-primary" href="/financeiro/pagamentos">
+            <i class="bi bi-clock-history me-1"></i> Histórico de pagamentos
+        </a>
     </div>
 
     <?php if (session('message')): ?>
@@ -59,6 +59,25 @@ $statusLabels = [
         </div>
     </div>
 
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Filtros rápidos de contas">
+        <span class="small fw-semibold text-secondary me-1">Mostrar:</span>
+        <a class="btn btn-sm <?= $filters['status'] === '' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro">
+            Todas
+        </a>
+        <a class="btn btn-sm <?= $filters['status'] === 'pending' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=pending">
+            Pendentes
+        </a>
+        <a class="btn btn-sm <?= $filters['status'] === 'partial' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=partial">
+            Parciais
+        </a>
+        <a class="btn btn-sm <?= $filters['status'] === 'overdue' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=overdue">
+            Vencidas
+        </a>
+        <a class="btn btn-sm <?= $filters['status'] === 'paid' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=paid">
+            Pagas
+        </a>
+    </div>
+
     <form class="card dc-filter-bar mb-3" method="get" action="/financeiro">
         <div class="row g-2">
             <div class="col-md-8">
@@ -79,12 +98,23 @@ $statusLabels = [
                 </select>
             </div>
             <div class="col-md-1">
-                <button class="btn btn-primary w-100"><i class="bi bi-funnel"></i></button>
+                <button class="btn btn-primary w-100" type="submit">Filtrar</button>
             </div>
         </div>
     </form>
 
     <section class="card">
+        <div class="card-body border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2 py-3">
+            <div>
+                <h2 class="dc-panel-title mb-1">Contas a pagar</h2>
+                <p class="dc-list-meta mb-0"><?= count($entries) ?> lançamento(s) encontrado(s)</p>
+            </div>
+            <?php if ($filters['q'] !== '' || $filters['status'] !== ''): ?>
+                <a class="btn btn-sm btn-outline-secondary" href="/financeiro">
+                    <i class="bi bi-x-lg me-1"></i> Limpar filtros
+                </a>
+            <?php endif ?>
+        </div>
         <div class="table-responsive">
             <table class="table align-middle mb-0">
                 <thead>
