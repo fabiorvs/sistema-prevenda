@@ -14,7 +14,7 @@ $statusClass = match ($item['status']) {
 <main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="/garagem">← Voltar para garagem</a>
+            <a class="dc-back-button" href="/garagem"><i class="bi bi-arrow-left"></i> Voltar para garagem</a>
             <h1 class="dc-page-title mt-2"><?= esc($item['product_name']) ?></h1>
             <p class="dc-page-subtitle"><?= esc($item['brand']) ?> · vendedor: <?= esc($item['seller_name']) ?></p>
         </div>

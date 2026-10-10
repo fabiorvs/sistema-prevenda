@@ -15,7 +15,7 @@ $pendingItems = array_filter(
 <main class="dc-content">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <a class="small text-decoration-none" href="/entregas">← Voltar para entregas</a>
+            <a class="dc-back-button" href="/entregas"><i class="bi bi-arrow-left"></i> Voltar para entregas</a>
             <h1 class="dc-page-title mt-2">Entrega <?= esc($order['reference']) ?></h1>
             <p class="dc-page-subtitle"><?= esc($order['seller_name']) ?> · status: <?= esc($statusLabel) ?></p>
         </div>

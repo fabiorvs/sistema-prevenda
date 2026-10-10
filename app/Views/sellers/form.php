@@ -1,7 +1,7 @@
 <?= $this->include('partials/header') ?><main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="/vendedores">← Voltar para vendedores</a>
+            <a class="dc-back-button" href="/vendedores"><i class="bi bi-arrow-left"></i> Voltar para vendedores</a>
             <h1 class="dc-page-title mt-2"><?= $seller ? 'Editar vendedor' : 'Novo vendedor' ?></h1>
             <p class="dc-page-subtitle">Dados de contato e identificação da loja.</p>
         </div>

@@ -3,7 +3,7 @@
 <main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="<?= esc($returnTo, 'attr') ?>">
+            <a class="dc-back-button" href="<?= esc($returnTo, 'attr') ?>">
                 <i class="bi bi-arrow-left"></i> Voltar
             </a>
             <h1 class="dc-page-title mt-2">Registrar pagamento</h1>

@@ -1,13 +1,10 @@
 <?= $this->include('partials/header') ?>
 
-<?php $financeTab = 'payments'; ?>
-
 <main class="dc-content">
-    <?= $this->include('finance/tabs') ?>
-
     <div class="dc-page-heading">
         <div>
-            <h1 class="dc-page-title">Pagamentos</h1>
+            <a class="dc-back-button" href="/financeiro"><i class="bi bi-arrow-left"></i> Voltar para financeiro</a>
+            <h1 class="dc-page-title mt-2">Pagamentos</h1>
             <p class="dc-page-subtitle">Histórico de pagamentos e estornos das pré-vendas.</p>
         </div>
     </div>

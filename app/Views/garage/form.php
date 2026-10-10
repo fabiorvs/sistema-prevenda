@@ -4,7 +4,7 @@
 <main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="/garagem">
+            <a class="dc-back-button" href="/garagem">
                 <i class="bi bi-arrow-left"></i> Voltar para garagem
             </a>
             <h1 class="dc-page-title mt-2">Novo item na garagem</h1>

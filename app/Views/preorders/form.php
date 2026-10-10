@@ -14,7 +14,7 @@ $selectedBrand = (string) ($oldBrands[0] ?? '');
 <main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="/pre-vendas">
+            <a class="dc-back-button" href="/pre-vendas">
                 <i class="bi bi-arrow-left"></i> Voltar para pré-vendas
             </a>
             <h1 class="dc-page-title mt-2">Nova pré-venda</h1>

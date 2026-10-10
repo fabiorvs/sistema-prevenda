@@ -2,7 +2,7 @@
 <main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="/carrinhos">← Voltar para carrinhos</a>
+            <a class="dc-back-button" href="/carrinhos"><i class="bi bi-arrow-left"></i> Voltar para carrinhos</a>
             <h1 class="dc-page-title mt-2"><?= $product ? 'Editar carrinho' : 'Novo carrinho' ?></h1>
             <p class="dc-page-subtitle">Informações e foto do modelo.</p>
         </div>

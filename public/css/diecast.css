@@ -576,6 +576,26 @@ body {
     font-weight: 750;
 }
 
+.dc-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--dc-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--dc-primary);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.dc-back-button:hover {
+    border-color: var(--dc-primary);
+    background: #f0eeff;
+    color: var(--dc-primary);
+}
+
 .dc-pagination .pagination {
     justify-content: center;
     gap: 5px;

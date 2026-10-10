@@ -1,7 +1,7 @@
 <?= $this->include('partials/header') ?>
 <?php $selectedBrand = (string) old('new_product_brand'); ?>
 <main class="dc-content">
-    <div class="dc-page-heading"><div><a class="dc-panel-link" href="/compras">← Voltar para compras</a><h1 class="dc-page-title mt-2">Nova compra presencial</h1><p class="dc-page-subtitle">O item será incluído imediatamente na coleção.</p></div></div>
+    <div class="dc-page-heading"><div><a class="dc-back-button" href="/compras"><i class="bi bi-arrow-left"></i> Voltar para compras</a><h1 class="dc-page-title mt-2">Nova compra presencial</h1><p class="dc-page-subtitle">O item será incluído imediatamente na coleção.</p></div></div>
     <?php if (session('errors')): ?><div class="alert alert-danger"><?= implode('<br>', array_map('esc', session('errors'))) ?></div><?php endif ?>
     <form class="card" method="post" enctype="multipart/form-data" action="/compras"><?= csrf_field() ?><div class="card-body"><div class="row g-3">
         <div class="col-md-6"><label class="form-label">Carrinho já cadastrado</label><select class="form-select" name="product_id"><option value="">Cadastrar novo abaixo</option><?php foreach ($products as $product): ?><option value="<?= $product['id'] ?>"><?= esc($product['brand'] . ' — ' . $product['name']) ?></option><?php endforeach ?></select></div>

@@ -15,7 +15,7 @@ $isLate = $shipment['expected_delivery_date']
 <main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="/entregas">
+            <a class="dc-back-button" href="/entregas">
                 <i class="bi bi-arrow-left"></i> Voltar para entregas
             </a>
             <div class="d-flex align-items-center gap-2 flex-wrap mt-2">

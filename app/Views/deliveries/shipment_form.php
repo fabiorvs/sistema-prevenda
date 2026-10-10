@@ -4,7 +4,7 @@
 <main class="dc-content">
     <div class="dc-page-heading">
         <div>
-            <a class="dc-panel-link" href="/entregas">
+            <a class="dc-back-button" href="/entregas">
                 <i class="bi bi-arrow-left"></i> Voltar para entregas
             </a>
             <h1 class="dc-page-title mt-2">Organizar envio</h1>

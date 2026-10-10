@@ -36,7 +36,7 @@ $canRegisterPayment = $preorder['status'] !== 'canceled'
 <main class="dc-content">
     <div class="dc-detail-heading">
         <div>
-            <a class="dc-panel-link" href="/pre-vendas">
+            <a class="dc-back-button" href="/pre-vendas">
                 <i class="bi bi-arrow-left"></i> Voltar para pré-vendas
             </a>
             <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
