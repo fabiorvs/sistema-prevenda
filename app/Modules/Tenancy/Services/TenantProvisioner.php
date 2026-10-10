@@ -27,6 +27,17 @@ final class TenantProvisioner
             throw new RuntimeException('Não foi possível criar o tenant.');
         }
         $this->db->table('tenant_users')->insert(['tenant_id' => $tenantId, 'user_id' => $userId, 'role' => 'owner', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
+        $freePlan = $this->db->table('plans')->select('id')->where('slug', 'free')->get()->getRowArray();
+        if ($freePlan !== null) {
+            $this->db->table('tenant_plan_assignments')->insert([
+                'tenant_id' => $tenantId,
+                'plan_id' => $freePlan['id'],
+                'status' => 'active',
+                'starts_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
         $this->db->table('user_preferences')->ignore(true)->insert(['user_id' => $userId, 'currency' => 'BRL', 'timezone' => 'America/Sao_Paulo', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->transComplete();
         if (! $this->db->transStatus()) {

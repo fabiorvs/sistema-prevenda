@@ -19,7 +19,14 @@ final class ActiveTenantResolver
         if ($tenantId && $this->belongsToUser((int) $tenantId, $userId)) {
             return (int) $tenantId;
         }
-        $row = $this->db->table('tenant_users')->select('tenant_id')->where(['user_id' => $userId, 'status' => 'active'])->orderBy('tenant_id')->get(1)->getRowArray();
+        $row = $this->db->table('tenant_users')
+            ->select('tenant_users.tenant_id')
+            ->join('tenants', 'tenants.id = tenant_users.tenant_id')
+            ->join('users', 'users.id = tenant_users.user_id')
+            ->where(['tenant_users.user_id' => $userId, 'tenant_users.status' => 'active', 'tenants.status' => 'active', 'users.active' => 1])
+            ->orderBy('tenant_users.tenant_id')
+            ->get(1)
+            ->getRowArray();
         if ($row === null) {
             return null;
         }
@@ -29,6 +36,10 @@ final class ActiveTenantResolver
 
     public function belongsToUser(int $tenantId, int $userId): bool
     {
-        return $this->db->table('tenant_users')->where(['tenant_id' => $tenantId, 'user_id' => $userId, 'status' => 'active'])->countAllResults() === 1;
+        return $this->db->table('tenant_users')
+            ->join('tenants', 'tenants.id = tenant_users.tenant_id')
+            ->join('users', 'users.id = tenant_users.user_id')
+            ->where(['tenant_users.tenant_id' => $tenantId, 'tenant_users.user_id' => $userId, 'tenant_users.status' => 'active', 'tenants.status' => 'active', 'users.active' => 1])
+            ->countAllResults() === 1;
     }
 }

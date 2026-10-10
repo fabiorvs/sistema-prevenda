@@ -20,6 +20,9 @@
                 <a href="/carrinhos">▣ &nbsp; Carrinhos</a>
                 <a href="/financeiro">◉ &nbsp; Financeiro</a>
                 <a href="/entregas">▤ &nbsp; Entregas</a>
+                <?php if (auth()->user()?->inGroup('superadmin')): ?>
+                    <a href="/admin">⚙ &nbsp; Administração</a>
+                <?php endif ?>
             </nav>
         </aside>
         <div class="dc-main">

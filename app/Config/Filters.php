@@ -13,6 +13,7 @@ use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\ActiveTenantFilter;
+use App\Filters\SuperAdminFilter;
 use CodeIgniter\Shield\Filters\SessionAuth;
 
 class Filters extends BaseFilters
@@ -38,6 +39,7 @@ class Filters extends BaseFilters
         'performance'   => PerformanceMetrics::class,
         'session'       => SessionAuth::class,
         'tenant'        => ActiveTenantFilter::class,
+        'superadmin'    => SuperAdminFilter::class,
     ];
 
     /**

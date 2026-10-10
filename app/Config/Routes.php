@@ -4,6 +4,14 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index', ['filter' => ['session', 'tenant']]);
+$routes->group('admin', ['filter' => ['session', 'superadmin']], static function ($routes): void {
+    $routes->get('/', '\\App\\Modules\\Administration\\Controllers\\AdministrationController::index');
+    $routes->post('tenants/(:num)/status', '\\App\\Modules\\Administration\\Controllers\\AdministrationController::setTenantStatus/$1');
+    $routes->post('users/(:num)/status', '\\App\\Modules\\Administration\\Controllers\\AdministrationController::setUserStatus/$1');
+    $routes->post('users/(:num)/global-role', '\\App\\Modules\\Administration\\Controllers\\AdministrationController::setGlobalRole/$1');
+    $routes->post('tenants/(:num)/users/(:num)/role', '\\App\\Modules\\Administration\\Controllers\\AdministrationController::setTenantRole/$1/$2');
+    $routes->post('tenants/(:num)/plan', '\\App\\Modules\\Administration\\Controllers\\AdministrationController::assignPlan/$1');
+});
 $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes): void {
     $routes->get('dashboard', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::index');
     $routes->get('dashboard/exportar', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::export');
