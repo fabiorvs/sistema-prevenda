@@ -342,6 +342,303 @@ body {
     font-size: 10px;
 }
 
+.admin-hero {
+    padding: 24px 26px;
+    border: 1px solid #e3e5ff;
+    border-radius: 14px;
+    background: linear-gradient(115deg, #ffffff 0%, #f5f4ff 100%);
+}
+
+.admin-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 9px;
+    color: var(--dc-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.admin-hero-date {
+    padding: 8px 11px;
+    border-radius: 7px;
+    color: var(--dc-muted);
+    background: rgba(255, 255, 255, .7);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-stat {
+    min-height: 152px;
+}
+
+.admin-panel .card-body {
+    padding: 20px;
+}
+
+.admin-panel-icon,
+.admin-plan-mark {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--dc-primary);
+    background: var(--dc-primary-soft);
+}
+
+.admin-plan-card {
+    height: 100%;
+    padding: 16px;
+    border: 1px solid var(--dc-border);
+    border-radius: 10px;
+    background: #fbfcff;
+}
+
+.admin-summary-list .list-group-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 17px 20px;
+    border-color: var(--dc-border);
+    color: var(--dc-muted);
+    font-size: 13px;
+}
+
+.admin-summary-list span i {
+    width: 20px;
+    color: var(--dc-primary);
+}
+
+.admin-summary-list strong {
+    color: var(--dc-ink);
+    font-size: 16px;
+}
+
+.admin-filter-card .card-body {
+    padding: 18px 20px;
+}
+
+.admin-filter-search {
+    min-width: 260px;
+}
+
+.admin-filter-card .input-group-text {
+    border-color: var(--dc-border);
+    color: var(--dc-muted);
+    background: #fafbfe;
+}
+
+.admin-accounts .table td,
+.admin-accounts .table th {
+    padding: 17px 14px;
+    vertical-align: top;
+}
+
+.admin-actions-col,
+.admin-actions {
+    min-width: 205px;
+}
+
+.admin-usage {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 7px;
+}
+
+.admin-usage span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    border-radius: 5px;
+    color: #556178;
+    background: #f2f5fa;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.admin-usage i {
+    color: var(--dc-primary);
+}
+
+.admin-audit-action {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 5px;
+    color: #4d42db;
+    background: var(--dc-primary-soft);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.dc-calendar-month-picker {
+    display: flex;
+    gap: 8px;
+    width: 220px;
+}
+
+.dc-calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.dc-calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    color: var(--dc-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.dc-calendar-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dc-calendar-legend i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f0ae22;
+}
+
+.dc-calendar-legend .delivery i { background: #4f7df5; }
+.dc-calendar-legend .arrival i { background: #20ac70; }
+.dc-calendar-legend .import i { background: #9a56e9; }
+
+.dc-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(110px, 1fr));
+    border-top: 1px solid var(--dc-border);
+    border-left: 1px solid var(--dc-border);
+    overflow-x: auto;
+}
+
+.dc-calendar-weekday {
+    min-width: 110px;
+    padding: 10px 12px;
+    border-right: 1px solid var(--dc-border);
+    border-bottom: 1px solid var(--dc-border);
+    color: var(--dc-muted);
+    background: #fafbfe;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.dc-calendar-day {
+    min-width: 110px;
+    min-height: 132px;
+    padding: 9px;
+    border-right: 1px solid var(--dc-border);
+    border-bottom: 1px solid var(--dc-border);
+    background: #fff;
+}
+
+.dc-calendar-day.is-outside { background: #fafbfe; }
+
+.dc-calendar-day.is-today { background: #f6f5ff; }
+
+.dc-calendar-day-number {
+    display: inline-grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 50%;
+    color: #536078;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.is-today .dc-calendar-day-number {
+    color: #fff;
+    background: var(--dc-primary);
+}
+
+.dc-calendar-events {
+    display: grid;
+    gap: 4px;
+    margin-top: 5px;
+}
+
+.dc-calendar-event {
+    display: block;
+    overflow: hidden;
+    padding: 4px 5px;
+    border-radius: 5px;
+    color: #8a6413;
+    background: #fff1cf;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.25;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dc-calendar-event span { font-weight: 800; }
+.dc-calendar-event.delivery { color: #3263cd; background: #e7efff; }
+.dc-calendar-event.arrival { color: #168559; background: #ddf7eb; }
+.dc-calendar-event.import { color: #7c39bb; background: #f1e7fc; }
+.dc-calendar-event:hover { color: inherit; filter: brightness(.96); }
+
+.dc-arrival-items {
+    display: grid;
+    gap: 8px;
+}
+
+.dc-arrival-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    padding: 7px;
+    border: 1px solid var(--dc-border);
+    border-radius: 8px;
+    background: #fafbfe;
+}
+
+.dc-arrival-item img,
+.dc-arrival-item-empty {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    place-items: center;
+    border-radius: 6px;
+    object-fit: cover;
+    color: #75819a;
+    background: #edf1f7;
+}
+
+.dc-arrival-item div { min-width: 0; }
+
+.dc-arrival-item strong,
+.dc-arrival-item small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dc-arrival-item strong {
+    color: var(--dc-ink);
+    font-size: 12px;
+}
+
+.dc-arrival-item small {
+    margin-top: 2px;
+    color: var(--dc-muted);
+    font-size: 10px;
+}
+
 .dc-panel-title {
     margin: 0;
     color: #172033;

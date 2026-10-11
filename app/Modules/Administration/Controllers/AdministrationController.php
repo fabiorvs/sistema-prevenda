@@ -14,9 +14,11 @@ final class AdministrationController extends BaseController
     public function index(): string
     {
         $search = trim((string) $this->request->getGet('q'));
+        $status = (string) $this->request->getGet('status');
+        $planId = (int) $this->request->getGet('plan_id');
         $db = db_connect();
         $accounts = $db->table('tenants')
-            ->select("tenants.*, tenant_users.user_id AS owner_id, tenant_users.role AS tenant_role, users.username, users.active AS user_active, auth_identities.secret AS email, COALESCE((SELECT admin_groups.group FROM auth_groups_users AS admin_groups WHERE admin_groups.user_id = users.id ORDER BY FIELD(admin_groups.group, 'superadmin', 'admin', 'developer', 'user', 'beta') LIMIT 1), 'user') AS global_group, plans.name AS plan_name, tenant_plan_assignments.plan_id", false)
+            ->select("tenants.*, tenant_users.user_id AS owner_id, tenant_users.role AS tenant_role, users.username, users.active AS user_active, auth_identities.secret AS email, COALESCE((SELECT admin_groups.group FROM auth_groups_users AS admin_groups WHERE admin_groups.user_id = users.id ORDER BY FIELD(admin_groups.group, 'superadmin', 'admin', 'developer', 'user', 'beta') LIMIT 1), 'user') AS global_group, plans.name AS plan_name, tenant_plan_assignments.plan_id, (SELECT COUNT(*) FROM tenant_users AS members WHERE members.tenant_id = tenants.id) AS member_count, (SELECT COUNT(*) FROM products WHERE products.tenant_id = tenants.id) AS product_count, (SELECT COUNT(*) FROM collection_items WHERE collection_items.tenant_id = tenants.id) AS collection_count, (SELECT COUNT(*) FROM preorders WHERE preorders.tenant_id = tenants.id AND preorders.status NOT IN ('received', 'cancelled')) AS open_preorders", false)
             ->join('tenant_users', "tenant_users.tenant_id = tenants.id AND tenant_users.role = 'owner'", 'left')
             ->join('users', 'users.id = tenant_users.user_id', 'left')
             ->join('auth_identities', "auth_identities.user_id = users.id AND auth_identities.type = 'email_password'", 'left')
@@ -33,9 +35,27 @@ final class AdministrationController extends BaseController
                 ->groupEnd();
         }
 
+        if (in_array($status, ['active', 'suspended'], true)) {
+            $accounts->where('tenants.status', $status);
+        }
+        if ($planId > 0) {
+            $accounts->where('tenant_plan_assignments.plan_id', $planId);
+        }
+
+        $plans = $db->table('plans')->where('status', 'active')->orderBy('user_limit')->get()->getResultArray();
+        $planUsage = $db->table('plans')
+            ->select('plans.id, plans.name, plans.slug, plans.user_limit, COUNT(tenant_plan_assignments.id) AS account_count', false)
+            ->join('tenant_plan_assignments', "tenant_plan_assignments.plan_id = plans.id AND tenant_plan_assignments.status = 'active'", 'left')
+            ->where('plans.status', 'active')
+            ->groupBy('plans.id')
+            ->orderBy('plans.user_limit')
+            ->get()
+            ->getResultArray();
+
         return view('admin/index', [
             'accounts' => $accounts->get()->getResultArray(),
-            'plans' => $db->table('plans')->where('status', 'active')->orderBy('user_limit')->get()->getResultArray(),
+            'plans' => $plans,
+            'planUsage' => $planUsage,
             'auditLogs' => $db->table('admin_audit_logs')
                 ->select('admin_audit_logs.*, users.username AS actor_name, tenants.name AS tenant_name')
                 ->join('users', 'users.id = admin_audit_logs.actor_user_id')
@@ -49,8 +69,13 @@ final class AdministrationController extends BaseController
                 'tenants' => $db->table('tenants')->where('status', 'active')->countAllResults(),
                 'suspended' => $db->table('tenants')->where('status', 'suspended')->countAllResults(),
                 'new_accounts' => $db->table('tenants')->where('created_at >=', date('Y-m-d 00:00:00'))->countAllResults(),
+                'new_week' => $db->table('tenants')->where('created_at >=', date('Y-m-d 00:00:00', strtotime('-6 days')))->countAllResults(),
+                'collection_items' => $db->table('collection_items')->countAllResults(),
+                'without_plan' => $db->table('tenants')->join('tenant_plan_assignments', 'tenant_plan_assignments.tenant_id = tenants.id', 'left')->where('tenant_plan_assignments.id IS NULL', null, false)->countAllResults(),
             ],
             'search' => $search,
+            'status' => $status,
+            'planId' => $planId,
             'globalGroups' => ['user' => 'Usuário', 'admin' => 'Administrador', 'developer' => 'Desenvolvedor', 'superadmin' => 'Super Admin'],
             'tenantRoles' => TenantRole::labels(),
         ]);

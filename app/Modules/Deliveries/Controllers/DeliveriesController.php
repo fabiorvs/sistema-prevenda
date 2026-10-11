@@ -46,8 +46,28 @@ final class DeliveriesController extends BaseController
                 ->whereNotIn('preorders.status', [DeliveryStatus::DELIVERED, DeliveryStatus::CANCELED]);
         }
 
+        $orders = $query->get()->getResultArray();
+        $itemsByOrder = [];
+        $orderIds = array_map(static fn (array $order): int => (int) $order['id'], $orders);
+
+        if ($orderIds !== []) {
+            $items = db_connect()->table('preorder_items')
+                ->select('preorder_items.preorder_id, preorder_items.quantity, preorder_items.received_quantity, products.name AS product_name, products.brand, products.scale, (SELECT MAX(id) FROM product_images WHERE product_id = products.id) AS image_id', false)
+                ->join('products', 'products.id = preorder_items.product_id')
+                ->whereIn('preorder_items.preorder_id', $orderIds)
+                ->where('preorder_items.received_quantity < preorder_items.quantity', null, false)
+                ->orderBy('preorder_items.id')
+                ->get()
+                ->getResultArray();
+
+            foreach ($items as $item) {
+                $itemsByOrder[(int) $item['preorder_id']][] = $item;
+            }
+        }
+
         return view('deliveries/index', [
-            'orders' => $query->get()->getResultArray(),
+            'orders' => $orders,
+            'itemsByOrder' => $itemsByOrder,
             'labels' => DeliveryStatus::labels(),
             'filters' => ['status' => $status, 'late' => $late],
             'shipments' => (new ShipmentService(db_connect()))->all($tenantId),

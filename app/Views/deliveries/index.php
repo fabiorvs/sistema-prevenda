@@ -130,6 +130,22 @@ $today = date('Y-m-d');
                         <p class="text-secondary small">
                             <?= (int) $order['received_quantity'] ?> de <?= (int) $order['total_quantity'] ?> item(ns) no vendedor
                         </p>
+                        <div class="dc-arrival-items mb-3">
+                            <?php foreach ($itemsByOrder[(int) $order['id']] ?? [] as $item): ?>
+                                <?php $remaining = (int) $item['quantity'] - (int) $item['received_quantity']; ?>
+                                <div class="dc-arrival-item">
+                                    <?php if (! empty($item['image_id'])): ?>
+                                        <img src="/imagens/carrinhos/<?= $item['image_id'] ?>" alt="<?= esc($item['product_name']) ?>">
+                                    <?php else: ?>
+                                        <span class="dc-arrival-item-empty"><i class="bi bi-car-front"></i></span>
+                                    <?php endif ?>
+                                    <div>
+                                        <strong><?= esc($item['product_name']) ?></strong>
+                                        <small><?= esc($item['brand']) ?><?= $item['scale'] ? ' · ' . esc($item['scale']) : '' ?> · <?= $remaining ?> un.</small>
+                                    </div>
+                                </div>
+                            <?php endforeach ?>
+                        </div>
                         <div class="border-top pt-3 mt-auto">
                             <div class="d-flex justify-content-between small mb-2">
                                 <span class="text-secondary">Previsão</span>
