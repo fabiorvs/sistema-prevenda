@@ -14,6 +14,7 @@ final class FinanceController extends BaseController
         $tenantId = $this->tenant();
         $search = trim((string) $this->request->getGet('q'));
         $status = (string) $this->request->getGet('status');
+        $page = max(1, (int) $this->request->getGet('page'));
         $query = db_connect()
             ->table('financial_entries')
             ->select('financial_entries.*, preorders.reference, sellers.name AS seller_name, COALESCE(SUM(payment_allocations.amount), 0) AS paid_amount', false)
@@ -113,6 +114,7 @@ final class FinanceController extends BaseController
         usort($entries, static function (array $left, array $right): int {
             return strcmp((string) ($left['due_date'] ?? '9999-12-31'), (string) ($right['due_date'] ?? '9999-12-31'));
         });
+        $allEntries = $entries;
 
         $garage = db_connect()->table('garage_items')
             ->select('COALESCE(SUM(garage_items.quantity * garage_items.unit_price), 0) AS total', false)
@@ -133,7 +135,7 @@ final class FinanceController extends BaseController
         $today = date('Y-m-d');
         $nextThirtyDays = date('Y-m-d', strtotime('+30 days'));
         $overview = ['due_now' => 0.0, 'next_30_days' => 0.0, 'invested_month' => 0.0];
-        foreach ($entries as $entry) {
+        foreach ($allEntries as $entry) {
             if ((float) $entry['balance'] <= 0.0001 || empty($entry['due_date'])) {
                 continue;
             }
@@ -158,12 +160,19 @@ final class FinanceController extends BaseController
             ->get()->getRowArray()['shipping_amount'] ?? 0);
         $overview['invested_month'] = $preorderInvestment + $garageInvestment + $freightInvestment;
 
+        $perPage = 15;
+        $totalEntries = count($allEntries);
+        $totalPages = max(1, (int) ceil($totalEntries / $perPage));
+        $page = min($page, $totalPages);
+        $entries = array_slice($allEntries, ($page - 1) * $perPage, $perPage);
+
         return view('finance/index', [
             'entries' => $entries,
             'summary' => $summary,
             'garage' => $garage,
             'overview' => $overview,
             'filters' => ['q' => $search, 'status' => $status],
+            'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $totalEntries, 'pages' => $totalPages],
         ]);
     }
 

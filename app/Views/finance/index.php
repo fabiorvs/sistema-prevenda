@@ -7,6 +7,12 @@ $statusLabels = [
     'overdue' => ['Vencido', 'text-bg-danger'],
     'pending' => ['Pendente', 'text-bg-warning'],
 ];
+$paginationParams = array_filter($filters, static fn (string $value): bool => $value !== '');
+$pageUrl = static function (int $page) use ($paginationParams): string {
+    return '/financeiro?' . http_build_query($paginationParams + ['page' => $page]);
+};
+$firstPage = max(1, $pagination['page'] - 2);
+$lastPage = min($pagination['pages'], $pagination['page'] + 2);
 ?>
 
 <main class="dc-content">
@@ -162,6 +168,22 @@ $statusLabels = [
         </div>
         <?php if ($entries === []): ?>
             <p class="text-secondary text-center py-5 mb-0">Nenhuma conta encontrada.</p>
+        <?php endif ?>
+        <?php if ($pagination['total'] > 0): ?>
+            <div class="card-body border-top d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <p class="dc-list-meta mb-0">Exibindo <?= (($pagination['page'] - 1) * $pagination['per_page']) + 1 ?>–<?= min($pagination['page'] * $pagination['per_page'], $pagination['total']) ?> de <?= $pagination['total'] ?> lançamento(s)</p>
+                <?php if ($pagination['pages'] > 1): ?>
+                    <nav class="dc-pagination" aria-label="Paginação de contas a pagar">
+                        <ul class="pagination mb-0">
+                            <li class="page-item <?= $pagination['page'] === 1 ? 'disabled' : '' ?>"><a class="page-link" href="<?= $pagination['page'] > 1 ? $pageUrl($pagination['page'] - 1) : '#' ?>" aria-label="Página anterior"><i class="bi bi-chevron-left"></i></a></li>
+                            <?php if ($firstPage > 1): ?><li class="page-item"><a class="page-link" href="<?= $pageUrl(1) ?>">1</a></li><?php if ($firstPage > 2): ?><li class="page-item disabled"><span class="page-link">…</span></li><?php endif ?><?php endif ?>
+                            <?php for ($pageNumber = $firstPage; $pageNumber <= $lastPage; $pageNumber++): ?><li class="page-item <?= $pageNumber === $pagination['page'] ? 'active' : '' ?>"><a class="page-link" href="<?= $pageUrl($pageNumber) ?>"><?= $pageNumber ?></a></li><?php endfor ?>
+                            <?php if ($lastPage < $pagination['pages']): ?><?php if ($lastPage < $pagination['pages'] - 1): ?><li class="page-item disabled"><span class="page-link">…</span></li><?php endif ?><li class="page-item"><a class="page-link" href="<?= $pageUrl($pagination['pages']) ?>"><?= $pagination['pages'] ?></a></li><?php endif ?>
+                            <li class="page-item <?= $pagination['page'] === $pagination['pages'] ? 'disabled' : '' ?>"><a class="page-link" href="<?= $pagination['page'] < $pagination['pages'] ? $pageUrl($pagination['page'] + 1) : '#' ?>" aria-label="Próxima página"><i class="bi bi-chevron-right"></i></a></li>
+                        </ul>
+                    </nav>
+                <?php endif ?>
+            </div>
         <?php endif ?>
     </section>
 </main>
