@@ -1,14 +1,13 @@
 <?= $this->include('partials/header') ?>
 
 <main class="dc-content">
-    <div class="dc-page-heading">
+    <div class="dc-page-heading dashboard-hero">
         <div>
+            <span class="dashboard-eyebrow"><i class="bi bi-stars"></i> Visão geral da coleção</span>
             <h1 class="dc-page-title">Olá, <?= esc(auth()->user()->username ?? 'Colecionador') ?>!</h1>
-            <p class="dc-page-subtitle">Aqui está um resumo das suas pré-vendas, garagem e finanças.</p>
+            <p class="dc-page-subtitle">Acompanhe suas pré-vendas, garagem, entregas e investimento.</p>
         </div>
-        <a class="btn btn-outline-primary" href="/dashboard/exportar?<?= esc(http_build_query(array_filter($filters))) ?>">
-            <i class="bi bi-download me-1"></i> Exportar CSV
-        </a>
+        <div class="d-flex flex-wrap gap-2"><a class="btn btn-primary" href="/pre-vendas/nova"><i class="bi bi-plus-lg me-1"></i> Nova pré-venda</a><a class="btn btn-outline-primary" href="/dashboard/exportar?<?= esc(http_build_query(array_filter($filters))) ?>"><i class="bi bi-download me-1"></i> Exportar CSV</a></div>
     </div>
 
     <form class="card dc-filter-bar mb-3" method="get" action="/dashboard">
@@ -42,7 +41,7 @@
         <div class="col-sm-6 col-xl-3">
             <section class="card dc-stat">
                 <span class="dc-stat-icon primary"><i class="bi bi-cart3"></i></span>
-                <p class="dc-stat-label">Total em pré-vendas</p>
+                <p class="dc-stat-label">Comprometido em pré-vendas</p>
                 <p class="dc-stat-value">R$ <?= number_format($cards['total'], 2, ',', '.') ?></p>
                 <p class="dc-stat-note"><?= count($orders) ?> pedido(s)</p>
             </section>
@@ -52,7 +51,7 @@
                 <span class="dc-stat-icon success"><i class="bi bi-wallet2"></i></span>
                 <p class="dc-stat-label">Total pago</p>
                 <p class="dc-stat-value">R$ <?= number_format($cards['paid'], 2, ',', '.') ?></p>
-                <p class="dc-stat-note">Pagamentos confirmados</p>
+                <p class="dc-stat-note">Entradas e parcelas confirmadas</p>
             </section>
         </div>
         <div class="col-sm-6 col-xl-3">
@@ -66,7 +65,7 @@
         <div class="col-sm-6 col-xl-3">
             <section class="card dc-stat">
                 <span class="dc-stat-icon purple"><i class="bi bi-truck"></i></span>
-                <p class="dc-stat-label">Pedidos pendentes</p>
+                <p class="dc-stat-label">Pré-vendas com saldo</p>
                 <p class="dc-stat-value"><?= (int) $cards['pending'] ?></p>
                 <p class="dc-stat-note">Com saldo em aberto</p>
             </section>
@@ -109,28 +108,21 @@
             <section class="card h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h2 class="dc-panel-title">Resumo por vendedor</h2>
-                        <span class="dc-list-meta">Saldo aberto</span>
+                        <h2 class="dc-panel-title">Status das pré-vendas</h2>
+                        <span class="dc-list-meta"><?= count($orders) ?> pedido(s)</span>
                     </div>
-                    <?php foreach ($seller_summary as $seller): ?>
-                        <div class="dc-list-row">
-                            <div class="dc-list-main">
-                                <p class="dc-list-title"><?= esc($seller['name']) ?></p>
-                                <p class="dc-list-meta"><?= (int) $seller['orders'] ?> pré-venda(s)</p>
-                            </div>
-                            <strong class="small">R$ <?= number_format($seller['balance'], 2, ',', '.') ?></strong>
-                        </div>
-                    <?php endforeach ?>
-                    <?php if ($seller_summary === []): ?>
-                        <p class="text-secondary small mb-0 py-4 text-center">Sem dados no período.</p>
-                    <?php endif ?>
+                    <div class="dashboard-status-chart"><canvas id="statusChart"></canvas><strong><?= count($orders) ?><small>pedidos</small></strong></div>
+                    <div class="dashboard-status-list"><?php foreach ($status_summary['labels'] as $index => $label): ?><?php if ($status_summary['values'][$index] > 0): ?><div><span><i style="background: <?= $status_summary['colors'][$index] ?>"></i><?= esc($label) ?></span><strong><?= (int) $status_summary['values'][$index] ?></strong></div><?php endif ?><?php endforeach ?></div>
                 </div>
             </section>
         </div>
     </div>
 
     <div class="row g-3">
-        <div class="col-lg-6">
+        <div class="col-lg-4">
+            <section class="card h-100 dashboard-collection-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span class="dc-stat-icon purple position-static"><i class="bi bi-grid-3x3-gap"></i></span><a class="dc-panel-link" href="/colecao">Abrir coleção</a></div><p class="dc-stat-label mt-3">Sua coleção</p><p class="dc-stat-value"><?= number_format($collection_summary['items'], 0, ',', '.') ?> miniatura(s)</p><div class="dashboard-collection-value"><span>Investido</span><strong>R$ <?= number_format($collection_summary['invested'], 2, ',', '.') ?></strong></div><div class="dashboard-collection-value"><span>Importações em acompanhamento</span><strong><?= (int) $collection_summary['imports'] ?></strong></div></div></section>
+        </div>
+        <div class="col-lg-4">
             <section class="card h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -160,7 +152,7 @@
                 </div>
             </section>
         </div>
-        <div class="col-lg-6">
+        <div class="col-lg-4">
             <section class="card h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -229,6 +221,12 @@
                 legend: { display: false },
             },
         },
+    });
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: { labels: <?= json_encode($status_summary['labels']) ?>, datasets: [{ data: <?= json_encode($status_summary['values']) ?>, backgroundColor: <?= json_encode($status_summary['colors']) ?>, borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: true } } },
     });
 </script>
 

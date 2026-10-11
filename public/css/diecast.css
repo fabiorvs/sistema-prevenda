@@ -628,6 +628,87 @@ body {
     white-space: nowrap;
 }
 
+.dashboard-hero {
+    padding: 24px 26px;
+    border: 1px solid #e2e6ff;
+    border-radius: 14px;
+    background: linear-gradient(115deg, #fff 0%, #f4f6ff 100%);
+}
+
+.dashboard-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    color: var(--dc-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.dashboard-status-chart {
+    position: relative;
+    height: 156px;
+    margin: 2px auto 8px;
+}
+
+.dashboard-status-chart strong {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    transform: translate(-50%, -50%);
+    color: var(--dc-ink);
+    font-size: 24px;
+    line-height: 1;
+}
+
+.dashboard-status-chart strong small {
+    margin-top: 4px;
+    color: var(--dc-muted);
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.dashboard-status-list {
+    display: grid;
+    gap: 5px;
+}
+
+.dashboard-status-list div,
+.dashboard-collection-value {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+}
+
+.dashboard-status-list span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--dc-muted);
+}
+
+.dashboard-status-list i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.dashboard-collection-card .card-body { padding: 20px; }
+
+.dashboard-collection-value {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--dc-border);
+    color: var(--dc-muted);
+}
+
+.dashboard-collection-value strong { color: var(--dc-ink); }
+
 .dc-arrival-item strong {
     color: var(--dc-ink);
     font-size: 12px;

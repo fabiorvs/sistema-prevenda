@@ -50,9 +50,52 @@ final class DashboardService
             'orders' => $orders,
             'seller_summary' => array_values($sellerSummary),
             'monthly' => $this->monthly($orders, $garageItems),
+            'status_summary' => $this->statusSummary($orders),
+            'collection_summary' => $this->collectionSummary($tenantId),
             'upcoming_deliveries' => $this->upcomingDeliveries($orders),
             'upcoming_due' => $this->upcomingDue($tenantId, $sellerId),
             'alerts' => $this->alerts($tenantId),
+        ];
+    }
+
+    /** @param list<array<string, mixed>> $orders @return array{labels:list<string>, values:list<int>, colors:list<string>} */
+    private function statusSummary(array $orders): array
+    {
+        $groups = [
+            'Aguardando lançamento' => ['awaiting_release', 'reserved', 'open'],
+            'No vendedor' => ['received', 'partially_received'],
+            'Envio preparado' => ['awaiting_shipment'],
+            'Em transporte' => ['in_transit'],
+            'Recebidas' => ['delivered'],
+            'Canceladas' => ['canceled'],
+        ];
+        $counts = array_fill_keys(array_keys($groups), 0);
+        foreach ($orders as $order) {
+            foreach ($groups as $label => $statuses) {
+                if (in_array($order['status'], $statuses, true)) {
+                    $counts[$label]++;
+                    break;
+                }
+            }
+        }
+
+        $colors = ['#4f7df5', '#23b477', '#a65bea', '#f2a623', '#35c47a', '#e96773'];
+        return ['labels' => array_keys($counts), 'values' => array_values($counts), 'colors' => $colors];
+    }
+
+    /** @return array{items:int,invested:float,imports:int} */
+    private function collectionSummary(int $tenantId): array
+    {
+        $collection = $this->db->table('collection_items')
+            ->select('COALESCE(SUM(quantity), 0) AS items, COALESCE(SUM(quantity * unit_cost + freight_amount), 0) AS invested', false)
+            ->where('tenant_id', $tenantId)
+            ->get()
+            ->getRowArray() ?? ['items' => 0, 'invested' => 0];
+
+        return [
+            'items' => (int) $collection['items'],
+            'invested' => (float) $collection['invested'],
+            'imports' => $this->db->table('imports')->where('tenant_id', $tenantId)->where('status !=', 'received')->countAllResults(),
         ];
     }
 
