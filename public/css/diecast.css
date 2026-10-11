@@ -173,6 +173,27 @@ body {
     text-decoration: none;
 }
 
+.dc-global-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: min(100%, 360px);
+    margin-right: auto;
+    padding: 7px 11px;
+    border: 1px solid var(--dc-border);
+    border-radius: 7px;
+    background: #f8f9fc;
+    color: var(--dc-muted);
+}
+
+.dc-global-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-size: 12px;
+}
+
 .dc-profile-link:hover .dc-user {
     color: var(--dc-primary);
 }

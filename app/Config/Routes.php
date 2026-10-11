@@ -14,6 +14,8 @@ $routes->group('admin', ['filter' => ['session', 'superadmin']], static function
 });
 $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes): void {
     $routes->get('dashboard', '\\App\\Modules\\Dashboard\\Controllers\\DashboardController::index');
+    $routes->get('buscar', '\\App\\Modules\\Explore\\Controllers\\ExploreController::search');
+    $routes->get('calendario', '\\App\\Modules\\Explore\\Controllers\\ExploreController::calendar');
     $routes->get('perfil', '\\App\\Modules\\Profile\\Controllers\\ProfileController::index');
     $routes->post('perfil', '\\App\\Modules\\Profile\\Controllers\\ProfileController::update');
     $routes->post('perfil/senha', '\\App\\Modules\\Profile\\Controllers\\ProfileController::password');
@@ -25,6 +27,10 @@ $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes
     $routes->get('anexos/(:num)', '\\App\\Modules\\Attachments\\Controllers\\AttachmentsController::download/$1');
     $routes->get('historico', '\\App\\Modules\\History\\Controllers\\HistoryController::index');
     $routes->get('compras', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::index');
+    $routes->get('importacoes', '\\App\\Modules\\Imports\\Controllers\\ImportsController::index');
+    $routes->get('importacoes/nova', '\\App\\Modules\\Imports\\Controllers\\ImportsController::create');
+    $routes->post('importacoes', '\\App\\Modules\\Imports\\Controllers\\ImportsController::store');
+    $routes->post('importacoes/(:num)/receber', '\\App\\Modules\\Imports\\Controllers\\ImportsController::receive/$1');
     $routes->get('compras/nova', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::create');
     $routes->post('compras', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::store');
     $routes->get('entregas', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::index');

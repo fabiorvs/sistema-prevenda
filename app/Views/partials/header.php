@@ -37,10 +37,12 @@ $isActive = static function (string $path) use ($currentPath): string {
                 <a class="<?= $isActive('carrinhos') ?>" href="/carrinhos"><i class="bi bi-car-front-fill"></i>Carrinhos</a>
                 <a class="<?= $isActive('garagem') ?>" href="/garagem"><i class="bi bi-p-square"></i>Garagem</a>
                 <a class="<?= $isActive('compras') ?>" href="/compras"><i class="bi bi-bag-check"></i>Compras</a>
+                <a class="<?= $isActive('importacoes') ?>" href="/importacoes"><i class="bi bi-airplane"></i>Importações</a>
                 <a class="<?= $isActive('colecao') ?>" href="/colecao"><i class="bi bi-grid-3x3-gap"></i>Coleção</a>
                 <a class="<?= $isActive('financeiro') ?>" href="/financeiro"><i class="bi bi-wallet2"></i>Financeiro</a>
                 <a class="<?= $isActive('entregas') ?>" href="/entregas"><i class="bi bi-box-seam"></i>Entregas</a>
                 <a class="<?= $isActive('historico') ?>" href="/historico"><i class="bi bi-clock-history"></i>Histórico</a>
+                <a class="<?= $isActive('calendario') ?>" href="/calendario"><i class="bi bi-calendar3"></i>Calendário</a>
                 <?php if ($user?->inGroup('superadmin')): ?>
                     <span class="dc-nav-label">Configurações</span>
                     <a class="<?= $isActive('admin') ?>" href="/admin"><i class="bi bi-shield-lock"></i>Administração</a>
@@ -52,6 +54,10 @@ $isActive = static function (string $path) use ($currentPath): string {
         </aside>
         <div class="dc-main">
             <header class="dc-topbar">
+                <form class="dc-global-search" action="/buscar" method="get">
+                    <i class="bi bi-search"></i>
+                    <input type="search" name="q" placeholder="Buscar miniatura, vendedor ou pedido..." aria-label="Pesquisa global">
+                </form>
                 <button class="dc-topbar-icon" type="button" aria-label="Notificações">
                     <i class="bi bi-bell"></i>
                 </button>
