@@ -1,103 +1,126 @@
 # Diecast Manager
 
-MVP multiusuário para acompanhar pré-vendas de miniaturas diecast. A Sprint 1 estabelece autenticação e isolamento por tenant; não inclui ainda vendedores, catálogo, pedidos ou financeiro.
+Aplicação web para colecionadores de miniaturas diecast organizarem compras, pré-vendas, pagamentos, envios e a coleção pessoal em um único lugar.
 
-## Executar localmente
+Desenvolvida em PHP com CodeIgniter 4 e CodeIgniter Shield, a aplicação isola os dados de cada conta por tenant: catálogos, vendedores, finanças, anexos e coleção não são compartilhados entre usuários.
 
-1. Copie `env` para `.env` e preencha a conexão MySQL. Use uma URL válida, como `app.baseURL = 'http://localhost:8080/'`.
-2. Instale as dependências: `composer install`.
-3. Execute todas as migrations: `php spark migrate --all`.
-4. Inicie o servidor local com quatro workers: `composer serve`, depois abra `/register` em `http://127.0.0.1:8080`.
+## Recursos
 
-O Shield fornece registro, login, logout, link mágico e fluxo de recuperação. O envio real de e-mail depende da configuração de `app/Config/Email.php` ou das variáveis de ambiente do provedor escolhido.
+- Autenticação, perfil editável e alteração segura de senha.
+- Vendedores, catálogo de miniaturas, marcas, escalas e fotos.
+- Pré-vendas com sinal, pagamentos parciais, saldo, chegada no vendedor e cancelamento.
+- Garagem para itens já reservados/guardados pelo vendedor.
+- Compras presenciais com local, data, valor, foto e entrada automática na coleção.
+- Envios agrupados por vendedor, frete, rateio, rastreio e previsão de entrega.
+- Coleção com galeria, custo final, origem, localização e filtros.
+- Financeiro unificado para Pré-vendas e Garagem.
+- Dashboard com alertas de pagamentos vencidos, envios atrasados e itens aguardando envio.
+- Histórico de compras e envios concluídos.
+- Anexos de comprovantes e fotos de pedidos.
+- Administração para usuários com grupo `superadmin`.
 
-## Tenancy e segurança
+## Tecnologias
 
-- Ao registrar uma conta, o evento `register` cria, em transação, um tenant pessoal, a associação `owner` em `tenant_users` e preferências iniciais (BRL/America_Sao_Paulo).
-- O tenant ativo é obtido apenas da sessão e validado contra o usuário autenticado. Nenhuma rota recebe `tenant_id` fornecido pelo navegador.
-- A página inicial requer sessão válida e tenant ativo; quem não estiver autenticado é redirecionado ao login.
-- As chaves estrangeiras usam o tipo de `users.id` do Shield (`INT UNSIGNED`). IDs de tenants permanecem `BIGINT UNSIGNED`.
+- PHP 8.2+
+- CodeIgniter 4.7
+- CodeIgniter Shield 1.4
+- MySQL 8+ ou MariaDB compatível
+- Bootstrap 5, Bootstrap Icons e PHPUnit 10
 
-## Validação
+## Requisitos
+
+- PHP 8.2 ou superior, com `intl`, `mbstring`, `json`, `mysqli`/`mysqlnd`, `fileinfo` e `gd`.
+- Composer 2.
+- MySQL 8+ ou MariaDB.
+
+## Instalação local
 
 ```bash
-php spark migrate:status --all
-php spark routes
-vendor/bin/phpunit
+git clone https://github.com/seu-usuario/diecast-manager.git
+cd diecast-manager
+composer install
+cp env .env
 ```
 
-## Próxima etapa
+Edite `.env` com a URL da aplicação e as credenciais do banco:
 
-Sprint 2: CRUD de vendedores e catálogo, sempre filtrado pelo tenant resolvido no servidor.
+```ini
+app.baseURL = 'http://127.0.0.1:8080/'
 
----
+database.default.hostname = 127.0.0.1
+database.default.database = diecast_manager
+database.default.username = seu_usuario
+database.default.password = sua_senha
+database.default.DBDriver = MySQLi
+database.default.port = 3306
+```
 
-# CodeIgniter 4 Application Starter
+Crie o banco antes de executar as migrations:
 
-## What is CodeIgniter?
+```sql
+CREATE DATABASE diecast_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+Depois, aplique o esquema e inicie o servidor:
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+```bash
+php spark migrate --all
+composer serve
+```
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+Abra `http://127.0.0.1:8080/register` para criar a primeira conta. Não existem credenciais padrão versionadas no projeto. O comando `composer serve` usa quatro workers PHP em `127.0.0.1:8080`.
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+## Fluxo de uso
 
-## Installation & updates
+1. Cadastre vendedores e miniaturas.
+2. Use **Pré-vendas** quando o item ainda chegará ao vendedor.
+3. Use **Garagem** para itens já guardados pelo vendedor.
+4. Confirme a chegada da pré-venda ao vendedor.
+5. Organize um envio com itens pagos do mesmo vendedor, informando frete, transportadora, rastreio e previsão.
+6. Ao receber o envio, os itens entram automaticamente na **Coleção**.
+7. Use **Compras** para aquisições presenciais: elas entram direto na coleção.
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+## Uploads e backup
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+Fotos e anexos são armazenados em `writable/uploads`, fora da raiz pública. Eles são acessados por rotas autenticadas e validadas pelo tenant ativo.
 
-## Setup
+Faça backup periódico do banco de dados e de `writable/uploads`.
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+## Testes e verificações
 
-## Important Change with index.php
+```bash
+vendor/bin/phpunit
+php spark migrate:status --all
+php spark routes
+```
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+## Estrutura
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+```text
+app/
+├── Modules/
+│   ├── Attachments/     # Comprovantes e fotos anexadas
+│   ├── Catalog/         # Catálogo e imagens
+│   ├── Collection/      # Coleção e galeria
+│   ├── Deliveries/      # Chegadas e envios agrupados
+│   ├── Finance/         # Contas e pagamentos
+│   ├── Garage/          # Itens guardados pelo vendedor
+│   ├── Preorders/       # Pré-vendas
+│   ├── Profile/         # Perfil e senha
+│   ├── Purchases/       # Compras presenciais
+│   └── Tenancy/         # Isolamento de dados
+├── Database/Migrations/ # Esquema do banco
+└── Views/               # Interfaces PHP/Bootstrap
+public/                  # Única raiz pública do servidor web
+writable/uploads/        # Uploads locais
+```
 
-**Please** read the user guide for a better explanation of how CI4 works!
+## Produção
 
-## Repository Management
+Configure Apache ou Nginx para apontar somente para `public/`. Não exponha `app/`, `writable/`, `vendor/` ou `.env`.
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+Defina `CI_ENVIRONMENT = production`, use uma chave de criptografia exclusiva e credenciais de banco restritas. Recursos de e-mail do Shield exigem configuração do provedor em `app/Config/Email.php` ou variáveis de ambiente.
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+## Licença
 
-## Server Requirements
-
-PHP version 8.2 or higher is required, with the following extensions installed:
-
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
-
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
-
-Additionally, make sure that the following extensions are enabled in your PHP:
-
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+Licenciado sob a [MIT License](LICENSE), exceto arquivos de terceiros sob suas respectivas licenças.

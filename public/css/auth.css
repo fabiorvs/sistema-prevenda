@@ -77,14 +77,11 @@ button, input {
     border-radius: 13px;
     background: #635bff;
     color: #fff;
-    font-weight: 800;
-    font-size: 25px;
-    letter-spacing: -3px;
-    padding-right: 3px
+    font-size: 20px;
 }
 
-.brand-symbol span {
-    color: #a9c6ff
+.brand-symbol i {
+    line-height: 1;
 }
 
 .brand-muted {
@@ -203,12 +200,22 @@ button, input {
     justify-content: center;
     align-items: center;
     padding: 55px 28px 25px;
-    background: #fff
+    background: linear-gradient(145deg, #fff 0%, #f7f8ff 100%)
 }
 
 .auth-content {
     width: min(100%, 430px);
     margin: auto 0
+}
+
+.auth-content:before {
+    content: "";
+    display: block;
+    width: 42px;
+    height: 4px;
+    margin-bottom: 26px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--primary), #8b85ff);
 }
 
 .eyebrow {
