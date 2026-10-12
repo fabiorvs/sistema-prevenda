@@ -136,8 +136,8 @@
                                     <i class="bi bi-car-front"></i>
                                 </span>
                                 <div class="dc-list-main">
-                                    <p class="dc-list-title"><?= esc($order['reference']) ?></p>
-                                    <p class="dc-list-meta"><?= esc($order['seller_name']) ?></p>
+                                    <p class="dc-list-title" title="<?= esc($order['product_names'] ?: $order['reference'], 'attr') ?>"><?= esc($order['product_names'] ?: $order['reference']) ?></p>
+                                    <p class="dc-list-meta"><?= esc($order['seller_name']) ?> · <?= esc($order['reference']) ?></p>
                                 </div>
                             </div>
                             <div class="text-end">
@@ -166,8 +166,8 @@
                                     <i class="bi bi-receipt-cutoff"></i>
                                 </span>
                                 <div class="dc-list-main">
-                                    <p class="dc-list-title"><?= esc($entry['reference']) ?></p>
-                                    <p class="dc-list-meta"><?= esc($entry['seller_name']) ?></p>
+                                    <p class="dc-list-title" title="<?= esc($entry['product_names'] ?: $entry['reference'], 'attr') ?>"><?= esc($entry['product_names'] ?: $entry['reference']) ?></p>
+                                    <p class="dc-list-meta"><?= esc($entry['seller_name']) ?> · <?= esc($entry['reference']) ?></p>
                                 </div>
                             </div>
                             <div class="text-end">

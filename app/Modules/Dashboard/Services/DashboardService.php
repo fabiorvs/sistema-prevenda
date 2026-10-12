@@ -103,9 +103,10 @@ final class DashboardService
     private function orders(int $tenantId, ?int $sellerId, ?string $from, ?string $to): array
     {
         $query = $this->db->table('preorders')
-            ->select('preorders.*, sellers.name AS seller_name, COALESCE(SUM(preorder_items.quantity * preorder_items.unit_price), 0) AS items_total', false)
+            ->select("preorders.*, sellers.name AS seller_name, COALESCE(SUM(preorder_items.quantity * preorder_items.unit_price), 0) AS items_total, GROUP_CONCAT(DISTINCT CONCAT(products.brand, ' — ', products.name) ORDER BY products.brand, products.name SEPARATOR ' | ') AS product_names", false)
             ->join('sellers', 'sellers.id = preorders.seller_id')
             ->join('preorder_items', 'preorder_items.preorder_id = preorders.id', 'left')
+            ->join('products', 'products.id = preorder_items.product_id', 'left')
             ->where('preorders.tenant_id', $tenantId)
             ->groupBy('preorders.id');
 
@@ -219,7 +220,7 @@ final class DashboardService
     private function upcomingDue(int $tenantId, ?int $sellerId): array
     {
         $query = $this->db->table('financial_entries')
-            ->select('financial_entries.*, preorders.reference, sellers.name AS seller_name')
+            ->select("financial_entries.*, preorders.reference, sellers.name AS seller_name, (SELECT GROUP_CONCAT(DISTINCT CONCAT(products.brand, ' — ', products.name) ORDER BY products.brand, products.name SEPARATOR ' | ') FROM preorder_items JOIN products ON products.id = preorder_items.product_id WHERE preorder_items.preorder_id = preorders.id) AS product_names", false)
             ->join('preorders', 'preorders.id = financial_entries.preorder_id')
             ->join('sellers', 'sellers.id = preorders.seller_id')
             ->where('financial_entries.tenant_id', $tenantId)
@@ -251,6 +252,7 @@ final class DashboardService
             }
             $entries[] = [
                 'reference' => 'Garagem: ' . $item['brand'] . ' ' . $item['product_name'],
+                'product_names' => $item['brand'] . ' — ' . $item['product_name'],
                 'seller_name' => $item['seller_name'],
                 'amount' => $balance,
                 'due_date' => $item['due_date'],
