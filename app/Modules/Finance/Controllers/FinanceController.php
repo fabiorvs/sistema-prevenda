@@ -156,6 +156,10 @@ final class FinanceController extends BaseController
             ->select('COALESCE(SUM(CASE WHEN type = "refund" THEN -amount ELSE amount END), 0) AS total', false)
             ->where(['tenant_id' => $tenantId, 'status' => 'confirmed'])
             ->where('paid_at >=', $monthStart)->where('paid_at <=', $monthEnd)->get()->getRowArray()['total'] ?? 0);
+        $preorderSignalInvestment = (float) (db_connect()->table('preorders')
+            ->selectSum('down_payment_amount')
+            ->where('tenant_id', $tenantId)->where('order_date >=', date('Y-m-01'))->where('order_date <=', date('Y-m-t'))
+            ->get()->getRowArray()['down_payment_amount'] ?? 0);
         $garageInvestment = (float) (db_connect()->table('garage_payments')
             ->selectSum('amount')->where('tenant_id', $tenantId)
             ->where('paid_at >=', $monthStart)->where('paid_at <=', $monthEnd)->get()->getRowArray()['amount'] ?? 0);
@@ -171,7 +175,7 @@ final class FinanceController extends BaseController
             ->select('COALESCE(SUM((item_amount + shipping_amount + tax_amount) * exchange_rate), 0) AS total', false)
             ->where('tenant_id', $tenantId)->where('purchased_at >=', date('Y-m-01'))->where('purchased_at <=', date('Y-m-t'))
             ->get()->getRowArray()['total'] ?? 0);
-        $overview['invested_month'] = $preorderInvestment + $garageInvestment + $freightInvestment + $directPurchaseInvestment + $importInvestment;
+        $overview['invested_month'] = $preorderInvestment + $preorderSignalInvestment + $garageInvestment + $freightInvestment + $directPurchaseInvestment + $importInvestment;
 
         $perPage = 15;
         $totalEntries = count($allEntries);
@@ -220,6 +224,9 @@ final class FinanceController extends BaseController
             'Importações' => [],
         ];
         $db = db_connect();
+        foreach ($db->table('preorders')->select('order_date AS date, down_payment_amount AS amount')->where('tenant_id', $tenantId)->where('down_payment_amount >', 0)->get()->getResultArray() as $row) {
+            $sources['Pré-vendas'][] = ['date' => $row['date'], 'amount' => (float) $row['amount']];
+        }
         foreach ($db->table('payments')->select('DATE(paid_at) AS date, amount, type', false)->where(['tenant_id' => $tenantId, 'status' => 'confirmed'])->get()->getResultArray() as $row) {
             $sources['Pré-vendas'][] = ['date' => $row['date'], 'amount' => $row['type'] === 'refund' ? -(float) $row['amount'] : (float) $row['amount']];
         }
