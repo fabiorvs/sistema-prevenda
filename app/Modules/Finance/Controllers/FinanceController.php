@@ -15,6 +15,11 @@ final class FinanceController extends BaseController
         $search = trim((string) $this->request->getGet('q'));
         $status = (string) $this->request->getGet('status');
         $page = max(1, (int) $this->request->getGet('page'));
+        $investmentFrom = $this->dateFilter('from', date('Y-m-01', strtotime('-11 months')));
+        $investmentTo = $this->dateFilter('to', date('Y-m-d'));
+        if ($investmentFrom > $investmentTo) {
+            [$investmentFrom, $investmentTo] = [$investmentTo, $investmentFrom];
+        }
         $query = db_connect()
             ->table('financial_entries')
             ->select('financial_entries.*, preorders.reference, sellers.name AS seller_name, COALESCE(SUM(payment_allocations.amount), 0) AS paid_amount', false)
@@ -158,7 +163,15 @@ final class FinanceController extends BaseController
             ->selectSum('shipping_amount')->where('tenant_id', $tenantId)
             ->where('status !=', 'canceled')->where('shipped_at >=', date('Y-m-01'))->where('shipped_at <=', date('Y-m-t'))
             ->get()->getRowArray()['shipping_amount'] ?? 0);
-        $overview['invested_month'] = $preorderInvestment + $garageInvestment + $freightInvestment;
+        $directPurchaseInvestment = (float) (db_connect()->table('direct_purchases')
+            ->select('COALESCE(SUM(quantity * unit_price), 0) AS total', false)
+            ->where('tenant_id', $tenantId)->where('purchased_at >=', date('Y-m-01'))->where('purchased_at <=', date('Y-m-t'))
+            ->get()->getRowArray()['total'] ?? 0);
+        $importInvestment = (float) (db_connect()->table('imports')
+            ->select('COALESCE(SUM((item_amount + shipping_amount + tax_amount) * exchange_rate), 0) AS total', false)
+            ->where('tenant_id', $tenantId)->where('purchased_at >=', date('Y-m-01'))->where('purchased_at <=', date('Y-m-t'))
+            ->get()->getRowArray()['total'] ?? 0);
+        $overview['invested_month'] = $preorderInvestment + $garageInvestment + $freightInvestment + $directPurchaseInvestment + $importInvestment;
 
         $perPage = 15;
         $totalEntries = count($allEntries);
@@ -171,7 +184,8 @@ final class FinanceController extends BaseController
             'summary' => $summary,
             'garage' => $garage,
             'overview' => $overview,
-            'filters' => ['q' => $search, 'status' => $status],
+            'investment' => $this->investmentAnalysis($tenantId, $investmentFrom, $investmentTo),
+            'filters' => ['q' => $search, 'status' => $status, 'from' => $investmentFrom, 'to' => $investmentTo],
             'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $totalEntries, 'pages' => $totalPages],
         ]);
     }
@@ -193,6 +207,71 @@ final class FinanceController extends BaseController
     private function tenant(): int
     {
         return (new ActiveTenantResolver(db_connect(), session()))->forUser((int) auth()->user()->id);
+    }
+
+    /** @return array{from:string,to:string,total:float,historical_total:float,by_source:array<string,float>,monthly:array{labels:list<string>,values:list<float>}} */
+    private function investmentAnalysis(int $tenantId, string $from, string $to): array
+    {
+        $sources = [
+            'Pré-vendas' => [],
+            'Garagem' => [],
+            'Fretes' => [],
+            'Compras presenciais' => [],
+            'Importações' => [],
+        ];
+        $db = db_connect();
+        foreach ($db->table('payments')->select('DATE(paid_at) AS date, amount, type', false)->where(['tenant_id' => $tenantId, 'status' => 'confirmed'])->get()->getResultArray() as $row) {
+            $sources['Pré-vendas'][] = ['date' => $row['date'], 'amount' => $row['type'] === 'refund' ? -(float) $row['amount'] : (float) $row['amount']];
+        }
+        foreach ($db->table('garage_payments')->select('DATE(paid_at) AS date, amount', false)->where('tenant_id', $tenantId)->get()->getResultArray() as $row) {
+            $sources['Garagem'][] = ['date' => $row['date'], 'amount' => (float) $row['amount']];
+        }
+        foreach ($db->table('shipments')->select('shipped_at AS date, shipping_amount AS amount')->where('tenant_id', $tenantId)->where('status !=', 'canceled')->where('shipped_at IS NOT NULL', null, false)->get()->getResultArray() as $row) {
+            $sources['Fretes'][] = ['date' => $row['date'], 'amount' => (float) $row['amount']];
+        }
+        foreach ($db->table('direct_purchases')->select('purchased_at AS date, quantity * unit_price AS amount', false)->where('tenant_id', $tenantId)->get()->getResultArray() as $row) {
+            $sources['Compras presenciais'][] = ['date' => $row['date'], 'amount' => (float) $row['amount']];
+        }
+        foreach ($db->table('imports')->select('purchased_at AS date, (item_amount + shipping_amount + tax_amount) * exchange_rate AS amount', false)->where('tenant_id', $tenantId)->get()->getResultArray() as $row) {
+            $sources['Importações'][] = ['date' => $row['date'], 'amount' => (float) $row['amount']];
+        }
+
+        $historicalTotal = 0.0;
+        $periodTotal = 0.0;
+        $bySource = array_fill_keys(array_keys($sources), 0.0);
+        $monthly = [];
+        foreach ($sources as $source => $rows) {
+            foreach ($rows as $row) {
+                $historicalTotal += $row['amount'];
+                if ($row['date'] < $from || $row['date'] > $to) {
+                    continue;
+                }
+                $periodTotal += $row['amount'];
+                $bySource[$source] += $row['amount'];
+                $month = substr($row['date'], 0, 7);
+                $monthly[$month] = ($monthly[$month] ?? 0.0) + $row['amount'];
+            }
+        }
+        ksort($monthly);
+
+        return [
+            'from' => $from,
+            'to' => $to,
+            'total' => $periodTotal,
+            'historical_total' => $historicalTotal,
+            'by_source' => $bySource,
+            'monthly' => [
+                'labels' => array_map(static fn (string $month): string => date('m/Y', strtotime($month . '-01')), array_keys($monthly)),
+                'values' => array_values($monthly),
+            ],
+        ];
+    }
+
+    private function dateFilter(string $key, string $default): string
+    {
+        $value = (string) $this->request->getGet($key);
+
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : $default;
     }
 
     /**

@@ -65,6 +65,35 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
         </div>
     </div>
 
+    <section class="card mb-3 finance-investment-panel">
+        <div class="card-body border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <h2 class="dc-panel-title mb-1">Análise de investimento</h2>
+                <p class="dc-list-meta mb-0">Acompanhe quanto foi investido na coleção em qualquer período.</p>
+            </div>
+            <form class="d-flex flex-wrap align-items-end gap-2" method="get" action="/financeiro">
+                <input type="hidden" name="q" value="<?= esc($filters['q']) ?>">
+                <input type="hidden" name="status" value="<?= esc($filters['status']) ?>">
+                <div><label class="form-label small mb-1" for="from">De</label><input class="form-control form-control-sm" id="from" type="date" name="from" value="<?= esc($investment['from']) ?>"></div>
+                <div><label class="form-label small mb-1" for="to">Até</label><input class="form-control form-control-sm" id="to" type="date" name="to" value="<?= esc($investment['to']) ?>"></div>
+                <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-bar-chart"></i> Analisar</button>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6 col-xl-3"><div class="finance-investment-stat"><span><i class="bi bi-calendar-range"></i> No período</span><strong>R$ <?= number_format($investment['total'], 2, ',', '.') ?></strong><small><?= date('d/m/Y', strtotime($investment['from'])) ?> a <?= date('d/m/Y', strtotime($investment['to'])) ?></small></div></div>
+                <div class="col-sm-6 col-xl-3"><div class="finance-investment-stat"><span><i class="bi bi-piggy-bank"></i> Investido no geral</span><strong>R$ <?= number_format($investment['historical_total'], 2, ',', '.') ?></strong><small>Desde o primeiro lançamento</small></div></div>
+                <?php foreach (['Pré-vendas', 'Garagem'] as $source): ?>
+                    <div class="col-sm-6 col-xl-3"><div class="finance-investment-stat"><span><?= esc($source) ?></span><strong>R$ <?= number_format($investment['by_source'][$source], 2, ',', '.') ?></strong><small>No período selecionado</small></div></div>
+                <?php endforeach ?>
+            </div>
+            <div class="row g-3 align-items-stretch">
+                <div class="col-lg-8"><div class="finance-investment-chart"><canvas id="investmentChart"></canvas></div></div>
+                <div class="col-lg-4"><div class="finance-source-list"><h3 class="dc-panel-title mb-2">Por origem</h3><?php foreach ($investment['by_source'] as $source => $amount): ?><div><span><?= esc($source) ?></span><strong>R$ <?= number_format($amount, 2, ',', '.') ?></strong></div><?php endforeach ?></div></div>
+            </div>
+        </div>
+    </section>
+
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Filtros rápidos de contas">
         <span class="small fw-semibold text-secondary me-1">Mostrar:</span>
         <a class="btn btn-sm <?= $filters['status'] === '' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro">
@@ -113,7 +142,7 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
         <div class="card-body border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2 py-3">
             <div>
                 <h2 class="dc-panel-title mb-1">Contas a pagar</h2>
-                <p class="dc-list-meta mb-0"><?= count($entries) ?> lançamento(s) encontrado(s)</p>
+                <p class="dc-list-meta mb-0"><?= $pagination['total'] ?> lançamento(s) encontrado(s)</p>
             </div>
             <?php if ($filters['q'] !== '' || $filters['status'] !== ''): ?>
                 <a class="btn btn-sm btn-outline-secondary" href="/financeiro">
@@ -187,5 +216,22 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
         <?php endif ?>
     </section>
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('investmentChart'), {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode($investment['monthly']['labels']) ?>,
+        datasets: [{ label: 'Investido', data: <?= json_encode($investment['monthly']['values']) ?>, backgroundColor: '#5146f5', borderRadius: 5, barThickness: 22 }],
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { grid: { display: false }, ticks: { color: '#7a8498', font: { size: 10 } } }, y: { beginAtZero: true, grid: { color: '#edf0f5' }, ticks: { color: '#7a8498', font: { size: 10 } } } },
+        plugins: { legend: { display: false } },
+    },
+});
+</script>
 
 <?= $this->include('partials/footer') ?>
