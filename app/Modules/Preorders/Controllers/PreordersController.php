@@ -84,6 +84,8 @@ final class PreordersController extends BaseController
         }
         unset($preorder);
 
+        $sellerSummary = $this->sellerSummary($tenantId);
+
         return view('preorders/index', [
             'preorders' => $preorders,
             'pager' => $model->pager,
@@ -93,7 +95,8 @@ final class PreordersController extends BaseController
                 ->get()
                 ->getResultArray(),
             'filters' => ['seller_id' => $sellerId],
-            'sellerSummary' => $this->sellerSummary($tenantId),
+            'sellerSummary' => $sellerSummary,
+            'overallSummary' => $this->overallSummary($sellerSummary),
         ]);
     }
 
@@ -106,7 +109,7 @@ final class PreordersController extends BaseController
             ->select(
                 'sellers.name AS seller_name, '
                 . 'COALESCE(SUM(item_totals.quantity), 0) AS items, '
-                . 'COALESCE(SUM(item_totals.total), 0) AS total, '
+                . 'COALESCE(SUM(item_totals.total + preorders.shipping_amount - preorders.discount_amount), 0) AS total, '
                 . 'COALESCE(SUM(preorders.down_payment_amount), 0) + COALESCE(SUM(payment_totals.paid), 0) AS paid',
                 false,
             )
@@ -138,6 +141,23 @@ final class PreordersController extends BaseController
             ->orderBy('sellers.name')
             ->get()
             ->getResultArray();
+    }
+
+    /**
+     * @param list<array<string, mixed>> $sellerSummary
+     * @return array{items:int,total:float,paid:float,balance:float}
+     */
+    private function overallSummary(array $sellerSummary): array
+    {
+        $summary = ['items' => 0, 'total' => 0.0, 'paid' => 0.0, 'balance' => 0.0];
+        foreach ($sellerSummary as $seller) {
+            $summary['items'] += (int) $seller['items'];
+            $summary['total'] += (float) $seller['total'];
+            $summary['paid'] += (float) $seller['paid'];
+        }
+        $summary['balance'] = max(0, $summary['total'] - $summary['paid']);
+
+        return $summary;
     }
 
     public function show(int $id): string

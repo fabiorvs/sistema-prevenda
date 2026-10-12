@@ -770,6 +770,49 @@ body {
     font-size: 12px;
 }
 
+.dc-overall-summary .card-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px;
+}
+
+.dc-overall-summary-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 250px;
+}
+
+.dc-overall-summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(115px, 1fr));
+    flex: 1;
+    gap: 12px;
+}
+
+.dc-overall-summary-metrics div {
+    padding-left: 14px;
+    border-left: 1px solid var(--dc-border);
+}
+
+.dc-overall-summary-metrics span,
+.dc-overall-summary-metrics strong {
+    display: block;
+}
+
+.dc-overall-summary-metrics span {
+    color: var(--dc-muted);
+    font-size: 11px;
+}
+
+.dc-overall-summary-metrics strong {
+    margin-top: 3px;
+    color: var(--dc-ink);
+    font-size: 15px;
+}
+
 .dc-arrival-item strong {
     color: var(--dc-ink);
     font-size: 12px;
@@ -1577,5 +1620,19 @@ body {
 
     .dc-detail-panel {
         padding: 15px;
+    }
+
+    .dc-overall-summary .card-body {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dc-overall-summary-metrics {
+        width: 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dc-overall-summary-metrics div:nth-child(3) {
+        border-left: 0;
     }
 }

@@ -39,10 +39,13 @@ final class GarageController extends BaseController
             ->orderBy('garage_items.acquired_at', 'DESC')
             ->paginate(12);
 
+        $sellerSummary = $this->sellerSummary($tenantId);
+
         return view('garage/index', [
             'items' => $rows,
             'pager' => $items->pager,
-            'sellerSummary' => $this->sellerSummary($tenantId),
+            'sellerSummary' => $sellerSummary,
+            'overallSummary' => $this->overallSummary($sellerSummary),
             'sellers' => db_connect()->table('sellers')->where('tenant_id', $tenantId)->orderBy('name')->get()->getResultArray(),
             'labels' => GarageStatus::labels(),
             'filters' => ['seller_id' => $sellerId, 'status' => $status],
@@ -324,6 +327,23 @@ final class GarageController extends BaseController
         }
 
         return array_values($summary);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $sellerSummary
+     * @return array{items:int,total:float,paid:float,balance:float}
+     */
+    private function overallSummary(array $sellerSummary): array
+    {
+        $summary = ['items' => 0, 'total' => 0.0, 'paid' => 0.0, 'balance' => 0.0];
+        foreach ($sellerSummary as $seller) {
+            $summary['items'] += (int) $seller['items'];
+            $summary['total'] += (float) $seller['total'];
+            $summary['paid'] += (float) $seller['paid'];
+        }
+        $summary['balance'] = max(0, $summary['total'] - $summary['paid']);
+
+        return $summary;
     }
 
     private function saveProductImage(int $tenantId, int $productId): void

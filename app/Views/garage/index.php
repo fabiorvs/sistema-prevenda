@@ -15,6 +15,13 @@
         <div class="alert alert-success"><?= esc(session('message')) ?></div>
     <?php endif ?>
 
+    <section class="card dc-overall-summary mb-3">
+        <div class="card-body">
+            <div class="dc-overall-summary-title"><span class="dc-stat-icon purple position-static"><i class="bi bi-p-square"></i></span><div><h2 class="dc-panel-title">Resumo geral da garagem</h2><p class="dc-list-meta mb-0">Itens guardados e disponíveis com seus vendedores.</p></div></div>
+            <div class="dc-overall-summary-metrics"><div><span>Miniaturas</span><strong><?= (int) $overallSummary['items'] ?></strong></div><div><span>Acumulado</span><strong>R$ <?= number_format($overallSummary['total'], 2, ',', '.') ?></strong></div><div><span>Pago</span><strong class="text-success">R$ <?= number_format($overallSummary['paid'], 2, ',', '.') ?></strong></div><div><span>Falta pagar</span><strong class="text-danger">R$ <?= number_format($overallSummary['balance'], 2, ',', '.') ?></strong></div></div>
+        </div>
+    </section>
+
     <div class="row g-3 mb-3">
         <?php foreach ($sellerSummary as $summary): ?>
             <?php $balance = max(0, (float) $summary['total'] - (float) $summary['paid']); ?>
