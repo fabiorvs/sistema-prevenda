@@ -76,6 +76,7 @@ $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes
     $routes->get('carrinhos/(:num)/editar', '\\App\\Modules\\Catalog\\Controllers\\ProductsController::edit/$1');
     $routes->post('carrinhos/(:num)', '\\App\\Modules\\Catalog\\Controllers\\ProductsController::update/$1');
     $routes->post('carrinhos/(:num)/excluir', '\\App\\Modules\\Catalog\\Controllers\\ProductsController::delete/$1');
+    $routes->post('carrinhos/(:num)/imagens/(:num)/excluir', '\\App\\Modules\\Catalog\\Controllers\\ProductsController::deleteImage/$1/$2');
     $routes->get('imagens/carrinhos/(:num)', '\\App\\Modules\\Catalog\\Controllers\\ProductsController::image/$1');
 });
 

@@ -802,6 +802,32 @@ body {
     display: block;
 }
 
+.dc-product-gallery-image {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--dc-border);
+    border-radius: 8px;
+    background: #fafbfe;
+}
+
+.dc-product-gallery-image img {
+    display: block;
+    width: 100%;
+    height: 145px;
+    object-fit: cover;
+}
+
+.dc-product-gallery-image .badge {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+}
+
+.dc-product-gallery-image form {
+    padding: 8px;
+    text-align: right;
+}
+
 .dc-overall-summary-metrics span {
     color: var(--dc-muted);
     font-size: 11px;
