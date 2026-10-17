@@ -125,3 +125,8 @@ _modules/*
 /results/
 /phpunit.xml
 docs/
+AGENTS.md
+!docs/
+docs/*
+!docs/auditoria-ci4/
+!docs/auditoria-ci4/*.md

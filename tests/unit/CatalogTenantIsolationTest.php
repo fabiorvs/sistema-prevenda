@@ -9,10 +9,10 @@ final class CatalogTenantIsolationTest extends CIUnitTestCase
 {
     public function testCatalogActionsAreScopedToTheActiveTenant(): void
     {
-        $controller = (string) file_get_contents(APPPATH . 'Modules/Catalog/Controllers/ProductsController.php');
+        $service = (string) file_get_contents(APPPATH . 'Modules/Catalog/Services/CatalogService.php');
 
-        $this->assertStringContainsString("where('tenant_id', \$tenantId)", $controller);
-        $this->assertStringContainsString("'tenant_id' => \$this->tenant(), 'product_id' => \$product['id']", $controller);
-        $this->assertStringContainsString("['id' => \$id, 'tenant_id' => \$this->tenant()]", $controller);
+        $this->assertStringContainsString("where('tenant_id', \$tenantId)", $service);
+        $this->assertStringContainsString("['id' => \$id, 'tenant_id' => \$tenantId]", $service);
+        $this->assertStringContainsString("['id' => \$imageId, 'tenant_id' => \$tenantId, 'product_id' => \$productId]", $service);
     }
 }
