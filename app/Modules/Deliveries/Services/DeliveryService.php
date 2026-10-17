@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Deliveries\Services;
 
+use App\Modules\Deliveries\Repositories\DeliveryRepository;
 use CodeIgniter\Database\BaseConnection;
 
 final class DeliveryService
 {
+    private readonly DeliveryRepository $deliveries;
+
     public function __construct(private readonly BaseConnection $db)
     {
+        $this->deliveries = new DeliveryRepository($db);
     }
 
     /**
@@ -17,34 +21,14 @@ final class DeliveryService
      */
     public function findOrder(int $tenantId, int $preorderId): ?array
     {
-        $order = $this->db->table('preorders')
-            ->select('preorders.*, sellers.name AS seller_name')
-            ->join('sellers', 'sellers.id = preorders.seller_id')
-            ->where(['preorders.id' => $preorderId, 'preorders.tenant_id' => $tenantId])
-            ->get()
-            ->getRowArray();
+        $order = $this->deliveries->findOrder($tenantId, $preorderId);
 
         if ($order === null) {
             return null;
         }
 
-        $order['items'] = $this->db->table('preorder_items')
-            ->select('preorder_items.*, products.name AS product_name, products.brand, product_images.id AS image_id')
-            ->join('products', 'products.id = preorder_items.product_id')
-            ->join('product_images', 'product_images.product_id = products.id AND product_images.is_primary = 1', 'left')
-            ->where(['preorder_items.preorder_id' => $preorderId, 'preorder_items.tenant_id' => $tenantId])
-            ->orderBy('preorder_items.id')
-            ->get()
-            ->getResultArray();
-
-        $order['events'] = $this->db->table('delivery_events')
-            ->select('delivery_events.*, preorder_items.id AS item_exists, products.name AS product_name')
-            ->join('preorder_items', 'preorder_items.id = delivery_events.preorder_item_id', 'left')
-            ->join('products', 'products.id = preorder_items.product_id', 'left')
-            ->where(['delivery_events.preorder_id' => $preorderId, 'delivery_events.tenant_id' => $tenantId])
-            ->orderBy('delivery_events.id', 'DESC')
-            ->get()
-            ->getResultArray();
+        $order['items'] = $this->deliveries->itemsForOrder($tenantId, $preorderId);
+        $order['events'] = $this->deliveries->eventsForOrder($tenantId, $preorderId);
 
         return $order;
     }
@@ -93,36 +77,28 @@ final class DeliveryService
                 ? DeliveryStatus::RECEIVED
                 : DeliveryStatus::PARTIALLY_RECEIVED;
 
-            $this->db->table('preorder_items')
-                ->where(['id' => $item['id'], 'tenant_id' => $tenantId])
-                ->update([
+            $this->deliveries->updateItem($tenantId, (int) $item['id'], [
                     'received_quantity' => $newReceivedQuantity,
                     'status' => $itemStatus,
                     'updated_at' => $now,
-                ]);
+            ]);
 
             $this->recordEvent($tenantId, $preorderId, (int) $item['id'], (string) $item['status'], $itemStatus, $quantity, $trackingCode, $expectedDate, $data['actual_delivery_date'] ?: date('Y-m-d'), $data['notes'] ?? null, $actorUserId, $now);
         }
 
-        $items = $this->db->table('preorder_items')
-            ->select('quantity, received_quantity')
-            ->where(['preorder_id' => $preorderId, 'tenant_id' => $tenantId])
-            ->get()
-            ->getResultArray();
+        $items = $this->deliveries->quantitiesForOrder($tenantId, $preorderId);
         $newStatus = DeliveryStatus::fromItems($items);
         $actualDate = $newStatus === DeliveryStatus::RECEIVED
             ? ($data['actual_delivery_date'] ?: date('Y-m-d'))
             : null;
 
-        $this->db->table('preorders')
-            ->where(['id' => $preorderId, 'tenant_id' => $tenantId])
-            ->update([
+        $this->deliveries->updateOrder($tenantId, $preorderId, [
                 'status' => $newStatus,
                 'tracking_code' => $trackingCode,
                 'expected_delivery_date' => $expectedDate,
                 'actual_delivery_date' => $actualDate,
                 'updated_at' => $now,
-            ]);
+        ]);
         $this->db->transComplete();
 
         if (! $this->db->transStatus()) {
@@ -144,7 +120,7 @@ final class DeliveryService
         int $actorUserId,
         string $createdAt,
     ): void {
-        $this->db->table('delivery_events')->insert([
+        $this->deliveries->createEvent([
             'tenant_id' => $tenantId,
             'preorder_id' => $preorderId,
             'preorder_item_id' => $itemId,
