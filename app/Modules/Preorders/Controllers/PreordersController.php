@@ -8,7 +8,6 @@ use App\Controllers\BaseController;
 use App\Modules\Catalog\Models\ProductImageModel;
 use App\Modules\Deliveries\Services\DeliveryService;
 use App\Modules\Deliveries\Services\DeliveryStatus;
-use App\Modules\Finance\Services\FinancialEntryService;
 use App\Modules\Preorders\Models\PreorderItemModel;
 use App\Modules\Preorders\Models\PreorderModel;
 use App\Modules\Tenancy\Services\ActiveTenantResolver;
@@ -185,7 +184,7 @@ final class PreordersController extends BaseController
         }
 
         if ($preorder['status'] !== DeliveryStatus::CANCELED) {
-            (new FinancialEntryService($db))->syncForPreorder($tenantId, $id);
+            service('financialEntryService')->syncForPreorder($tenantId, $id);
         }
 
         $financialEntry = $db->table('financial_entries')
@@ -289,7 +288,7 @@ final class PreordersController extends BaseController
         $db->transStart();
         (new PreorderModel())->update($id, ['seller_id' => (int) $this->request->getPost('seller_id'), 'order_date' => $this->request->getPost('order_date'), 'expected_delivery_date' => $this->request->getPost('expected_delivery_date') ?: null, 'notes' => $this->request->getPost('notes')]);
         (new PreorderItemModel())->update($preorder['items'][0]['id'], ['quantity' => (int) $this->request->getPost('quantity'), 'unit_price' => $this->money($this->request->getPost('unit_price'))]);
-        (new FinancialEntryService($db))->syncForPreorder($tenantId, $id);
+        service('financialEntryService')->syncForPreorder($tenantId, $id);
         $db->transComplete();
         return redirect()->to('/pre-vendas/' . $id)->with('message', 'Pré-venda atualizada.');
     }
@@ -496,7 +495,7 @@ final class PreordersController extends BaseController
             'actor_user_id' => (int) auth()->user()->id,
             'created_at' => gmdate('Y-m-d H:i:s'),
         ]);
-        (new FinancialEntryService($db))->createForPreorder($tenantId, $preorderId);
+        service('financialEntryService')->createForPreorder($tenantId, $preorderId);
         $db->transComplete();
 
         if (! $db->transStatus()) {

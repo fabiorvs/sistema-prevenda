@@ -19,6 +19,17 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function financialEntryService(bool $getShared = true): \App\Modules\Finance\Services\FinancialEntryService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('financialEntryService');
+        }
+
+        return new \App\Modules\Finance\Services\FinancialEntryService(
+            new \App\Modules\Finance\Repositories\FinancialEntryRepository(db_connect()),
+        );
+    }
+
     public static function preorderService(bool $getShared = true): \App\Modules\Preorders\Services\PreorderService
     {
         if ($getShared) {
