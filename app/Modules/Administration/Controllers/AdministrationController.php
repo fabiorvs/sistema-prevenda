@@ -202,6 +202,6 @@ final class AdministrationController extends BaseController
 
     private function audit(): AdminAuditService
     {
-        return new AdminAuditService(db_connect());
+        return service('adminAuditService');
     }
 }

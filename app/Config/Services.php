@@ -19,6 +19,17 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function adminAuditService(bool $getShared = true): \App\Modules\Administration\Services\AdminAuditService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('adminAuditService');
+        }
+
+        return new \App\Modules\Administration\Services\AdminAuditService(
+            new \App\Modules\Administration\Repositories\AdminAuditRepository(db_connect()),
+        );
+    }
+
     public static function financialEntryService(bool $getShared = true): \App\Modules\Finance\Services\FinancialEntryService
     {
         if ($getShared) {

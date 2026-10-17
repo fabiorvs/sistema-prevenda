@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Services;
 
-use CodeIgniter\Database\ConnectionInterface;
+use App\Modules\Administration\Repositories\AdminAuditRepository;
 
 final class AdminAuditService
 {
-    public function __construct(private readonly ConnectionInterface $db)
+    public function __construct(private readonly AdminAuditRepository $audits)
     {
     }
 
@@ -17,7 +17,7 @@ final class AdminAuditService
      */
     public function log(int $actorUserId, string $action, ?int $targetUserId = null, ?int $tenantId = null, array $metadata = []): void
     {
-        $this->db->table('admin_audit_logs')->insert([
+        $this->audits->create([
             'actor_user_id' => $actorUserId,
             'target_user_id' => $targetUserId,
             'tenant_id' => $tenantId,
