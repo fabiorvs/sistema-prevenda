@@ -96,9 +96,8 @@ MYSQL_PWD="$DB_PASSWORD" mysqldump \
     --port="$DB_PORT" \
     --user="$DB_USER" \
     --single-transaction \
-    --routines \
-    --events \
     --triggers \
+    --no-tablespaces \
     --default-character-set=utf8mb4 \
     "$DB_NAME" > "$STAGING_DIR/database.sql"
 
