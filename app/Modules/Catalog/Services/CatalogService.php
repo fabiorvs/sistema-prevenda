@@ -6,6 +6,7 @@ namespace App\Modules\Catalog\Services;
 
 use App\Modules\Catalog\Models\ProductImageModel;
 use App\Modules\Catalog\Models\ProductModel;
+use App\Modules\Catalog\Repositories\CatalogRepository;
 use CodeIgniter\Database\ConnectionInterface;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\Files\UploadedFile;
@@ -13,8 +14,11 @@ use CodeIgniter\HTTP\Files\UploadedFile;
 /** Operações de domínio do catálogo, incluindo a gestão do acervo de imagens. */
 final class CatalogService
 {
-    public function __construct(private readonly ConnectionInterface $db)
+    private readonly CatalogRepository $catalog;
+
+    public function __construct(ConnectionInterface $db)
     {
+        $this->catalog = new CatalogRepository($db);
     }
 
     /** @return array{products: list<array<string,mixed>>, pager: mixed, filters: array<string,string>, brands: list<array<string,mixed>>, scales: list<array<string,mixed>>} */
@@ -45,8 +49,8 @@ final class CatalogService
             'products' => $rows,
             'pager' => $products->pager,
             'filters' => $filters,
-            'brands' => $this->db->table('products')->select('brand')->where('tenant_id', $tenantId)->where('brand !=', '')->groupBy('brand')->orderBy('brand')->get()->getResultArray(),
-            'scales' => $this->db->table('products')->select('scale')->where('tenant_id', $tenantId)->where('scale IS NOT NULL', null, false)->where('scale !=', '')->groupBy('scale')->orderBy('scale')->get()->getResultArray(),
+            'brands' => $this->catalog->brands($tenantId),
+            'scales' => $this->catalog->scales($tenantId),
         ];
     }
 
@@ -98,7 +102,7 @@ final class CatalogService
         foreach ($this->images($tenantId, $productId) as $image) {
             $this->deleteImageFile($image);
         }
-        $this->db->table('product_images')->where(['tenant_id' => $tenantId, 'product_id' => $productId])->delete();
+        $this->catalog->deleteImagesForProduct($tenantId, $productId);
         (new ProductModel())->delete($productId);
     }
 
