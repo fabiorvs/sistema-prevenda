@@ -46,6 +46,8 @@
         "cs:fix": "php-cs-fixer fix --using-cache=no --sequential",
         "stan": "phpstan analyse --configuration=phpstan.neon --memory-limit=512M --debug",
         "test": "phpunit --no-coverage",
+        "test:unit": "phpunit --no-coverage tests/unit",
+        "test:integration": "phpunit --no-coverage tests/integration",
         "test:coverage": "phpunit",
         "serve": "PHP_CLI_SERVER_WORKERS=4 php spark serve --host 127.0.0.1 --port 8080"
     }

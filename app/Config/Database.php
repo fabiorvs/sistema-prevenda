@@ -167,9 +167,9 @@ class Database extends Config
         'hostname'    => '127.0.0.1',
         'username'    => '',
         'password'    => '',
-        'database'    => ':memory:',
-        'DBDriver'    => 'SQLite3',
-        'DBPrefix'    => 'db_',  // Needed to ensure we're working correctly with prefixes live. DO NOT REMOVE FOR CI DEVS
+        'database'    => 'prevenda_test',
+        'DBDriver'    => 'MySQLi',
+        'DBPrefix'    => '',
         'pConnect'    => false,
         'DBDebug'     => true,
         'charset'     => 'utf8',
@@ -199,6 +199,9 @@ class Database extends Config
         // we don't overwrite live data on accident.
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
+            $this->tests['hostname'] = env('database.tests.hostname', env('database.default.hostname', '127.0.0.1'));
+            $this->tests['username'] = env('database.tests.username', env('database.default.username', ''));
+            $this->tests['password'] = env('database.tests.password', env('database.default.password', ''));
         }
     }
 }
