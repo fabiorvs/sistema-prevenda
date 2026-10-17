@@ -19,6 +19,20 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function preorderService(bool $getShared = true): \App\Modules\Preorders\Services\PreorderService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('preorderService');
+        }
+
+        $connection = db_connect();
+
+        return new \App\Modules\Preorders\Services\PreorderService(
+            new \App\Modules\Preorders\Repositories\PreorderRepository($connection),
+            new \App\Infrastructure\Database\TransactionManager($connection),
+        );
+    }
+
     /*
      * public static function example($getShared = true)
      * {

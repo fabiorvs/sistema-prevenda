@@ -311,32 +311,14 @@ final class PreordersController extends BaseController
 
     public function cancel(int $id)
     {
-        $tenantId = $this->tenant();
-        $preorder = (new DeliveryService(db_connect()))->findOrder($tenantId, $id);
+        $canceled = service('preorderService')->cancel(
+            $this->tenant(),
+            $id,
+            (int) auth()->user()->id,
+        );
 
-        if ($preorder === null) {
-            throw PageNotFoundException::forPageNotFound();
-        }
-        if ($preorder['status'] === DeliveryStatus::CANCELED) {
+        if (! $canceled) {
             return redirect()->to('/pre-vendas/' . $id)->with('message', 'Esta pré-venda já está cancelada.');
-        }
-
-        $db = db_connect();
-        $now = gmdate('Y-m-d H:i:s');
-        $db->transStart();
-        (new PreorderModel())->update($id, ['status' => DeliveryStatus::CANCELED]);
-        $db->table('preorder_status_history')->insert([
-            'tenant_id' => $tenantId,
-            'preorder_id' => $id,
-            'old_status' => $preorder['status'],
-            'new_status' => DeliveryStatus::CANCELED,
-            'actor_user_id' => (int) auth()->user()->id,
-            'created_at' => $now,
-        ]);
-        $db->transComplete();
-
-        if (! $db->transStatus()) {
-            throw new \RuntimeException('Não foi possível cancelar a pré-venda.');
         }
 
         return redirect()->to('/pre-vendas/' . $id)->with('message', 'Pré-venda cancelada.');
