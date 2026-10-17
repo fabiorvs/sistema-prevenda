@@ -50,28 +50,42 @@ final class PreordersController extends BaseController
             ->paginate(15);
 
         $db = db_connect();
-        foreach ($preorders as &$preorder) {
-            $item = $db->table('preorder_items')
-                ->select('products.name AS product_name, products.brand, product_images.id AS image_id')
+        $preorderIds = array_column($preorders, 'id');
+        $itemsByPreorder = [];
+        $allocatedByPreorder = [];
+
+        if ($preorderIds !== []) {
+            $items = $db->table('preorder_items')
+                ->select('preorder_items.preorder_id, products.name AS product_name, products.brand, product_images.id AS image_id')
                 ->join('products', 'products.id = preorder_items.product_id')
                 ->join('product_images', 'product_images.product_id = products.id AND product_images.is_primary = 1', 'left')
-                ->where([
-                    'preorder_items.preorder_id' => $preorder['id'],
-                    'preorder_items.tenant_id' => $tenantId,
-                ])
+                ->where('preorder_items.tenant_id', $tenantId)
+                ->whereIn('preorder_items.preorder_id', $preorderIds)
                 ->orderBy('preorder_items.id')
-                ->get(1)
-                ->getRowArray();
-
-            $allocated = (float) ($db->table('financial_entries')
-                ->select('COALESCE(SUM(payment_allocations.amount), 0) AS paid_amount', false)
-                ->join('payment_allocations', 'payment_allocations.financial_entry_id = financial_entries.id', 'left')
-                ->where([
-                    'financial_entries.preorder_id' => $preorder['id'],
-                    'financial_entries.tenant_id' => $tenantId,
-                ])
                 ->get()
-                ->getRowArray()['paid_amount'] ?? 0);
+                ->getResultArray();
+
+            foreach ($items as $item) {
+                $itemsByPreorder[$item['preorder_id']] ??= $item;
+            }
+
+            $allocations = $db->table('financial_entries')
+                ->select('financial_entries.preorder_id, COALESCE(SUM(payment_allocations.amount), 0) AS paid_amount', false)
+                ->join('payment_allocations', 'payment_allocations.financial_entry_id = financial_entries.id', 'left')
+                ->where('financial_entries.tenant_id', $tenantId)
+                ->whereIn('financial_entries.preorder_id', $preorderIds)
+                ->groupBy('financial_entries.preorder_id')
+                ->get()
+                ->getResultArray();
+
+            foreach ($allocations as $allocation) {
+                $allocatedByPreorder[$allocation['preorder_id']] = (float) $allocation['paid_amount'];
+            }
+        }
+
+        foreach ($preorders as &$preorder) {
+            $item = $itemsByPreorder[$preorder['id']] ?? null;
+            $allocated = $allocatedByPreorder[$preorder['id']] ?? 0.0;
 
             $preorder['product_name'] = $item['product_name'] ?? 'Sem item';
             $preorder['brand'] = $item['brand'] ?? '';
