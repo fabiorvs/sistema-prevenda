@@ -23,7 +23,8 @@ final class CreateDirectPurchases extends Migration
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
-        $this->forge->addKey('id', true); $this->forge->addKey(['tenant_id', 'purchased_at']);
+        $this->forge->addKey('id', true);
+        $this->forge->addKey(['tenant_id', 'purchased_at']);
         $this->forge->addForeignKey('tenant_id', 'tenants', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('product_id', 'products', 'id', 'RESTRICT', 'CASCADE');
         $this->forge->createTable('direct_purchases', true);

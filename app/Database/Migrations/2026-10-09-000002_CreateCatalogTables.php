@@ -1,14 +1,35 @@
 <?php
+
 namespace App\Database\Migrations;
+
 use CodeIgniter\Database\Migration;
-class CreateCatalogTables extends Migration {
- public function up(): void {
-  $this->forge->addField(['id'=>['type'=>'BIGINT','constraint'=>20,'unsigned'=>true,'auto_increment'=>true],'tenant_id'=>['type'=>'BIGINT','constraint'=>20,'unsigned'=>true],'name'=>['type'=>'VARCHAR','constraint'=>160],'contact_name'=>['type'=>'VARCHAR','constraint'=>160,'null'=>true],'whatsapp'=>['type'=>'VARCHAR','constraint'=>30,'null'=>true],'instagram'=>['type'=>'VARCHAR','constraint'=>100,'null'=>true],'website'=>['type'=>'VARCHAR','constraint'=>255,'null'=>true],'notes'=>['type'=>'TEXT','null'=>true],'created_at'=>['type'=>'DATETIME','null'=>true],'updated_at'=>['type'=>'DATETIME','null'=>true]]);
-  $this->forge->addKey('id',true); $this->forge->addKey(['tenant_id','name']); $this->forge->addForeignKey('tenant_id','tenants','id','CASCADE','CASCADE'); $this->forge->createTable('sellers',true);
-  $this->forge->addField(['id'=>['type'=>'BIGINT','constraint'=>20,'unsigned'=>true,'auto_increment'=>true],'tenant_id'=>['type'=>'BIGINT','constraint'=>20,'unsigned'=>true],'brand'=>['type'=>'VARCHAR','constraint'=>100],'name'=>['type'=>'VARCHAR','constraint'=>160],'manufacturer_code'=>['type'=>'VARCHAR','constraint'=>100,'null'=>true],'scale'=>['type'=>'VARCHAR','constraint'=>30,'null'=>true],'series'=>['type'=>'VARCHAR','constraint'=>100,'null'=>true],'notes'=>['type'=>'TEXT','null'=>true],'created_at'=>['type'=>'DATETIME','null'=>true],'updated_at'=>['type'=>'DATETIME','null'=>true]]);
-  $this->forge->addKey('id',true); $this->forge->addKey(['tenant_id','brand']); $this->forge->addKey(['tenant_id','name']); $this->forge->addForeignKey('tenant_id','tenants','id','CASCADE','CASCADE'); $this->forge->createTable('products',true);
-  $this->forge->addField(['id'=>['type'=>'BIGINT','constraint'=>20,'unsigned'=>true,'auto_increment'=>true],'tenant_id'=>['type'=>'BIGINT','constraint'=>20,'unsigned'=>true],'product_id'=>['type'=>'BIGINT','constraint'=>20,'unsigned'=>true],'path'=>['type'=>'VARCHAR','constraint'=>255],'mime_type'=>['type'=>'VARCHAR','constraint'=>100],'size_bytes'=>['type'=>'INT','constraint'=>11,'unsigned'=>true],'sort_order'=>['type'=>'INT','constraint'=>11,'unsigned'=>true,'default'=>0],'is_primary'=>['type'=>'TINYINT','constraint'=>1,'default'=>0],'created_at'=>['type'=>'DATETIME','null'=>true],'updated_at'=>['type'=>'DATETIME','null'=>true]]);
-  $this->forge->addKey('id',true); $this->forge->addKey(['tenant_id','product_id']); $this->forge->addForeignKey('tenant_id','tenants','id','CASCADE','CASCADE'); $this->forge->addForeignKey('product_id','products','id','CASCADE','CASCADE'); $this->forge->createTable('product_images',true);
- }
- public function down(): void {$this->forge->dropTable('product_images',true);$this->forge->dropTable('products',true);$this->forge->dropTable('sellers',true);}
+
+class CreateCatalogTables extends Migration
+{
+    public function up(): void
+    {
+        $this->forge->addField(['id' => ['type' => 'BIGINT','constraint' => 20,'unsigned' => true,'auto_increment' => true],'tenant_id' => ['type' => 'BIGINT','constraint' => 20,'unsigned' => true],'name' => ['type' => 'VARCHAR','constraint' => 160],'contact_name' => ['type' => 'VARCHAR','constraint' => 160,'null' => true],'whatsapp' => ['type' => 'VARCHAR','constraint' => 30,'null' => true],'instagram' => ['type' => 'VARCHAR','constraint' => 100,'null' => true],'website' => ['type' => 'VARCHAR','constraint' => 255,'null' => true],'notes' => ['type' => 'TEXT','null' => true],'created_at' => ['type' => 'DATETIME','null' => true],'updated_at' => ['type' => 'DATETIME','null' => true]]);
+        $this->forge->addKey('id', true);
+        $this->forge->addKey(['tenant_id','name']);
+        $this->forge->addForeignKey('tenant_id', 'tenants', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('sellers', true);
+        $this->forge->addField(['id' => ['type' => 'BIGINT','constraint' => 20,'unsigned' => true,'auto_increment' => true],'tenant_id' => ['type' => 'BIGINT','constraint' => 20,'unsigned' => true],'brand' => ['type' => 'VARCHAR','constraint' => 100],'name' => ['type' => 'VARCHAR','constraint' => 160],'manufacturer_code' => ['type' => 'VARCHAR','constraint' => 100,'null' => true],'scale' => ['type' => 'VARCHAR','constraint' => 30,'null' => true],'series' => ['type' => 'VARCHAR','constraint' => 100,'null' => true],'notes' => ['type' => 'TEXT','null' => true],'created_at' => ['type' => 'DATETIME','null' => true],'updated_at' => ['type' => 'DATETIME','null' => true]]);
+        $this->forge->addKey('id', true);
+        $this->forge->addKey(['tenant_id','brand']);
+        $this->forge->addKey(['tenant_id','name']);
+        $this->forge->addForeignKey('tenant_id', 'tenants', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('products', true);
+        $this->forge->addField(['id' => ['type' => 'BIGINT','constraint' => 20,'unsigned' => true,'auto_increment' => true],'tenant_id' => ['type' => 'BIGINT','constraint' => 20,'unsigned' => true],'product_id' => ['type' => 'BIGINT','constraint' => 20,'unsigned' => true],'path' => ['type' => 'VARCHAR','constraint' => 255],'mime_type' => ['type' => 'VARCHAR','constraint' => 100],'size_bytes' => ['type' => 'INT','constraint' => 11,'unsigned' => true],'sort_order' => ['type' => 'INT','constraint' => 11,'unsigned' => true,'default' => 0],'is_primary' => ['type' => 'TINYINT','constraint' => 1,'default' => 0],'created_at' => ['type' => 'DATETIME','null' => true],'updated_at' => ['type' => 'DATETIME','null' => true]]);
+        $this->forge->addKey('id', true);
+        $this->forge->addKey(['tenant_id','product_id']);
+        $this->forge->addForeignKey('tenant_id', 'tenants', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('product_id', 'products', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('product_images', true);
+    }
+    public function down(): void
+    {
+        $this->forge->dropTable('product_images', true);
+        $this->forge->dropTable('products', true);
+        $this->forge->dropTable('sellers', true);
+    }
 }

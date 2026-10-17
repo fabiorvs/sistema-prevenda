@@ -270,11 +270,17 @@ final class DashboardService
         $today = date('Y-m-d');
         $alerts = [];
         $overdue = $this->db->table('financial_entries')->where('tenant_id', $tenantId)->whereIn('status', ['pending', 'partial'])->where('due_date <', $today)->countAllResults();
-        if ($overdue > 0) $alerts[] = ['type' => 'danger', 'label' => $overdue . ' pagamento(s) vencido(s)', 'description' => 'Existem parcelas com data de vencimento anterior a hoje.', 'url' => '/financeiro?status=overdue'];
+        if ($overdue > 0) {
+            $alerts[] = ['type' => 'danger', 'label' => $overdue . ' pagamento(s) vencido(s)', 'description' => 'Existem parcelas com data de vencimento anterior a hoje.', 'url' => '/financeiro?status=overdue'];
+        }
         $lateShipments = $this->db->table('shipments')->where('tenant_id', $tenantId)->where('status', 'shipped')->where('expected_delivery_date <', $today)->countAllResults();
-        if ($lateShipments > 0) $alerts[] = ['type' => 'danger', 'label' => $lateShipments . ' envio(s) atrasado(s)', 'description' => 'A previsão de entrega já passou.', 'url' => '/entregas?late=1'];
+        if ($lateShipments > 0) {
+            $alerts[] = ['type' => 'danger', 'label' => $lateShipments . ' envio(s) atrasado(s)', 'description' => 'A previsão de entrega já passou.', 'url' => '/entregas?late=1'];
+        }
         $waiting = $this->db->table('preorders')->where('tenant_id', $tenantId)->where('status', 'awaiting_shipment')->where('updated_at <', date('Y-m-d H:i:s', strtotime('-14 days')))->countAllResults();
-        if ($waiting > 0) $alerts[] = ['type' => 'warning', 'label' => $waiting . ' item(ns) aguardando envio', 'description' => 'Estão disponíveis no vendedor há mais de 14 dias.', 'url' => '/entregas'];
+        if ($waiting > 0) {
+            $alerts[] = ['type' => 'warning', 'label' => $waiting . ' item(ns) aguardando envio', 'description' => 'Estão disponíveis no vendedor há mais de 14 dias.', 'url' => '/entregas'];
+        }
         return $alerts;
     }
 }

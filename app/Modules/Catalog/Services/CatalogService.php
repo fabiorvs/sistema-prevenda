@@ -132,7 +132,9 @@ final class CatalogService
     public function validateGallery(array $gallery): ?string
     {
         foreach ($gallery as $file) {
-            if ($file->getError() === UPLOAD_ERR_NO_FILE) continue;
+            if ($file->getError() === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
             if (! $file->isValid() || $file->getSize() > 5 * 1024 * 1024 || ! in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/webp'], true)) {
                 return 'Cada foto da galeria deve ser JPEG, PNG ou WebP válida, com no máximo 5 MB.';
             }
@@ -143,7 +145,9 @@ final class CatalogService
     public function storeImage(int $tenantId, int $productId, UploadedFile $file, bool $primary = true): void
     {
         $directory = WRITEPATH . 'uploads/products/' . $tenantId;
-        if (! is_dir($directory)) mkdir($directory, 0700, true);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0700, true);
+        }
         $filename = $file->getRandomName();
         $file->move($directory, $filename);
         $max = (new ProductImageModel())->selectMax('sort_order')->where(['tenant_id' => $tenantId, 'product_id' => $productId])->first();
@@ -154,6 +158,8 @@ final class CatalogService
     private function deleteImageFile(array $image): void
     {
         $path = WRITEPATH . 'uploads/' . $image['path'];
-        if (is_file($path)) unlink($path);
+        if (is_file($path)) {
+            unlink($path);
+        }
     }
 }

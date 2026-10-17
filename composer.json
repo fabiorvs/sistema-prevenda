@@ -16,7 +16,9 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
+        "friendsofphp/php-cs-fixer": "^3.75",
         "mikey179/vfsstream": "^1.6",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.5.16"
     },
     "autoload": {
@@ -39,7 +41,12 @@
         "sort-packages": true
     },
     "scripts": {
-        "test": "phpunit",
+        "lint": "find app tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "cs:check": "php-cs-fixer fix --dry-run --diff --using-cache=no --sequential",
+        "cs:fix": "php-cs-fixer fix --using-cache=no --sequential",
+        "stan": "phpstan analyse --configuration=phpstan.neon --memory-limit=512M --debug",
+        "test": "phpunit --no-coverage",
+        "test:coverage": "phpunit",
         "serve": "PHP_CLI_SERVER_WORKERS=4 php spark serve --host 127.0.0.1 --port 8080"
     }
 }

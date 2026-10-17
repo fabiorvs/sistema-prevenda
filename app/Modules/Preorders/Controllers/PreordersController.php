@@ -251,21 +251,32 @@ final class PreordersController extends BaseController
     public function edit(int $id): string
     {
         $preorder = (new DeliveryService(db_connect()))->findOrder($this->tenant(), $id);
-        if ($preorder === null) throw PageNotFoundException::forPageNotFound();
+        if ($preorder === null) {
+            throw PageNotFoundException::forPageNotFound();
+        }
         return view('preorders/edit', ['preorder' => $preorder, 'item' => $preorder['items'][0] ?? null, 'sellers' => db_connect()->table('sellers')->where('tenant_id', $this->tenant())->orderBy('name')->get()->getResultArray()]);
     }
 
     public function update(int $id)
     {
         $rules = ['seller_id' => 'required|is_natural_no_zero', 'order_date' => 'required|valid_date[Y-m-d]', 'expected_delivery_date' => 'permit_empty|valid_date[Y-m-d]', 'quantity' => 'required|is_natural_no_zero', 'unit_price' => 'required|decimal|greater_than[0]'];
-        if (! $this->validate($rules)) return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
-        $tenantId = $this->tenant(); $db = db_connect(); $preorder = (new DeliveryService($db))->findOrder($tenantId, $id);
-        if ($preorder === null || $preorder['items'] === []) throw PageNotFoundException::forPageNotFound();
-        if ((int) $this->request->getPost('quantity') < (int) $preorder['items'][0]['received_quantity']) return redirect()->back()->withInput()->with('errors', ['quantity' => 'A quantidade não pode ser menor que a já recebida.']);
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        $tenantId = $this->tenant();
+        $db = db_connect();
+        $preorder = (new DeliveryService($db))->findOrder($tenantId, $id);
+        if ($preorder === null || $preorder['items'] === []) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+        if ((int) $this->request->getPost('quantity') < (int) $preorder['items'][0]['received_quantity']) {
+            return redirect()->back()->withInput()->with('errors', ['quantity' => 'A quantidade não pode ser menor que a já recebida.']);
+        }
         $db->transStart();
         (new PreorderModel())->update($id, ['seller_id' => (int) $this->request->getPost('seller_id'), 'order_date' => $this->request->getPost('order_date'), 'expected_delivery_date' => $this->request->getPost('expected_delivery_date') ?: null, 'notes' => $this->request->getPost('notes')]);
         (new PreorderItemModel())->update($preorder['items'][0]['id'], ['quantity' => (int) $this->request->getPost('quantity'), 'unit_price' => $this->money($this->request->getPost('unit_price'))]);
-        (new FinancialEntryService($db))->syncForPreorder($tenantId, $id); $db->transComplete();
+        (new FinancialEntryService($db))->syncForPreorder($tenantId, $id);
+        $db->transComplete();
         return redirect()->to('/pre-vendas/' . $id)->with('message', 'Pré-venda atualizada.');
     }
 

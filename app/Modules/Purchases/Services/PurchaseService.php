@@ -31,15 +31,21 @@ final class PurchaseService
     {
         $productId = (int) $data['product_id'];
         $name = trim((string) $data['new_product_name']);
-        if ($productId === 0 && $name === '') throw new \InvalidArgumentException('Informe o modelo da miniatura.');
+        if ($productId === 0 && $name === '') {
+            throw new \InvalidArgumentException('Informe o modelo da miniatura.');
+        }
         $this->db->transStart();
         $now = gmdate('Y-m-d H:i:s');
         if ($productId === 0) {
             $brand = trim((string) $data['new_product_brand']);
-            if ($brand === '__new__') $brand = trim((string) $data['custom_product_brand']);
+            if ($brand === '__new__') {
+                $brand = trim((string) $data['custom_product_brand']);
+            }
             $this->db->table('products')->insert(['tenant_id' => $tenantId, 'brand' => $brand ?: 'Sem marca', 'name' => $name, 'scale' => trim((string) $data['new_product_scale']) ?: null, 'created_at' => $now, 'updated_at' => $now]);
             $productId = (int) $this->db->insertID();
-            if ($image && $image->isValid() && ! $image->hasMoved()) $this->catalog->storeImage($tenantId, $productId, $image);
+            if ($image && $image->isValid() && ! $image->hasMoved()) {
+                $this->catalog->storeImage($tenantId, $productId, $image);
+            }
         }
         $quantity = (int) $data['quantity'];
         $price = number_format((float) $data['unit_price'], 2, '.', '');
@@ -49,6 +55,8 @@ final class PurchaseService
         $purchaseId = (int) $this->db->insertID();
         $this->db->table('collection_items')->insert(['tenant_id' => $tenantId, 'direct_purchase_id' => $purchaseId, 'product_id' => $productId, 'quantity' => $quantity, 'unit_cost' => $price, 'freight_amount' => 0, 'received_at' => $data['purchased_at'], 'location' => $location, 'notes' => $notes, 'created_at' => $now, 'updated_at' => $now]);
         $this->db->transComplete();
-        if (! $this->db->transStatus()) throw new \RuntimeException('Não foi possível registrar a compra.');
+        if (! $this->db->transStatus()) {
+            throw new \RuntimeException('Não foi possível registrar a compra.');
+        }
     }
 }

@@ -1,0 +1,12 @@
+parameters:
+    level: 3
+    paths:
+        - app/Controllers
+        - app/Filters
+        - app/Infrastructure
+        - app/Modules
+        - tests
+    excludePaths:
+        - app/Views
+        - app/Database/Migrations
+        - tests/_support

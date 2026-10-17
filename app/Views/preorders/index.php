@@ -91,7 +91,7 @@ $preorderStatusLabels = [
     <div class="row g-3">
         <?php foreach ($preorders as $order): ?>
             <div class="col-sm-6 col-xl-4">
-            <article class="card h-100 overflow-hidden"><?php if($order['image_id']): ?><img class="preorder-image"
+            <article class="card h-100 overflow-hidden"><?php if ($order['image_id']): ?><img class="preorder-image"
                     src="/imagens/carrinhos/<?= $order['image_id'] ?>"
                     alt="<?= esc($order['product_name']) ?>"><?php else: ?><div class="preorder-placeholder">🚘</div>
                 <?php endif ?><div class="card-body">
@@ -105,14 +105,14 @@ $preorderStatusLabels = [
                         <span class="dc-seller-tag"><i class="bi bi-shop"></i><?= esc($order['seller_name']) ?></span>
                     </div>
                     <div class="d-flex justify-content-between border-top pt-3"><span class="preorder-meta">Entrega
-                            prevista</span><strong><?= $order['expected_delivery_date'] ? esc(date('d/m/Y',strtotime($order['expected_delivery_date']))) : 'Não informada' ?></strong>
+                            prevista</span><strong><?= $order['expected_delivery_date'] ? esc(date('d/m/Y', strtotime($order['expected_delivery_date']))) : 'Não informada' ?></strong>
                     </div>
                     <div class="d-flex justify-content-between mt-2"><span class="preorder-meta">Total</span><span
-                            class="preorder-money">R$ <?= number_format($order['total'],2,',','.') ?></span></div>
+                            class="preorder-money">R$ <?= number_format($order['total'], 2, ',', '.') ?></span></div>
                     <div class="d-flex justify-content-between mt-1"><span class="preorder-meta">Sinal</span><span>R$
-                            <?= number_format((float)$order['down_payment_amount'],2,',','.') ?></span></div>
+                            <?= number_format((float)$order['down_payment_amount'], 2, ',', '.') ?></span></div>
                     <div class="d-flex justify-content-between mt-2"><span class="preorder-meta">Falta pagar</span><span
-                            class="preorder-balance">R$ <?= number_format($order['balance'],2,',','.') ?></span></div>
+                            class="preorder-balance">R$ <?= number_format($order['balance'], 2, ',', '.') ?></span></div>
                     <div class="d-flex gap-2 mt-3">
                         <a class="btn btn-primary btn-sm flex-grow-1" href="/pre-vendas/<?= $order['id'] ?>">
                             Ver detalhes

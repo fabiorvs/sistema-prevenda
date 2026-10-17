@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types = 1);
+declare (strict_types=1);
 
 /**
  * This file is part of CodeIgniter Shield.
@@ -34,7 +34,7 @@ class Auth extends ShieldAuth
      * ////////////////////////////////////////////////////////////////////
      */
 
-                                                   // Constants for Record Login Attempts. Do not change.
+    // Constants for Record Login Attempts. Do not change.
     public const RECORD_LOGIN_ATTEMPT_NONE    = 0; // Do not record at all
     public const RECORD_LOGIN_ATTEMPT_FAILURE = 1; // Record only failures
     public const RECORD_LOGIN_ATTEMPT_ALL     = 2; // Record all login attempts
