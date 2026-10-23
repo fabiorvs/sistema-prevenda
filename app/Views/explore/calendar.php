@@ -15,6 +15,8 @@ $eventClass = [
     'Entrega' => 'delivery',
     'Chegada ao vendedor' => 'arrival',
     'Importação' => 'import',
+    'Compra' => 'purchase',
+    'Reserva' => 'reservation',
 ];
 $monthNames = [1 => 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 ?>
@@ -22,7 +24,7 @@ $monthNames = [1 => 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
     <div class="dc-page-heading">
         <div>
             <h1 class="dc-page-title">Calendário</h1>
-            <p class="dc-page-subtitle">Pagamentos previstos, entregas esperadas, chegadas ao vendedor e importações.</p>
+            <p class="dc-page-subtitle">Compras, reservas, pagamentos previstos, entregas esperadas e importações.</p>
         </div>
         <form method="get" action="/calendario" class="dc-calendar-month-picker">
             <label class="visually-hidden" for="month">Mês</label>
@@ -38,7 +40,7 @@ $monthNames = [1 => 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
             <a class="btn btn-outline-secondary btn-sm" href="/calendario?month=<?= $nextMonth ?>">Próximo <i class="bi bi-chevron-right"></i></a>
         </div>
         <div class="dc-calendar-legend px-3 pb-3">
-            <span class="payment"><i></i> Pagamento</span><span class="delivery"><i></i> Entrega</span><span class="arrival"><i></i> Chegada ao vendedor</span><span class="import"><i></i> Importação</span>
+            <span class="purchase"><i></i> Compra</span><span class="reservation"><i></i> Reserva</span><span class="payment"><i></i> Pagamento</span><span class="delivery"><i></i> Entrega</span><span class="arrival"><i></i> Chegada ao vendedor</span><span class="import"><i></i> Importação</span>
         </div>
         <div class="dc-calendar-grid">
             <?php foreach (['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'] as $dayName): ?>

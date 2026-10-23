@@ -19,6 +19,15 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function activeTenantResolver(bool $getShared = true): \App\Modules\Tenancy\Services\ActiveTenantResolver
+    {
+        if ($getShared) {
+            return static::getSharedInstance('activeTenantResolver');
+        }
+
+        return new \App\Modules\Tenancy\Services\ActiveTenantResolver(db_connect(), service('session'));
+    }
+
     public static function adminAuditService(bool $getShared = true): \App\Modules\Administration\Services\AdminAuditService
     {
         if ($getShared) {
@@ -52,6 +61,17 @@ class Services extends BaseService
         return new \App\Modules\Preorders\Services\PreorderService(
             new \App\Modules\Preorders\Repositories\PreorderRepository($connection),
             new \App\Infrastructure\Database\TransactionManager($connection),
+        );
+    }
+
+    public static function exploreService(bool $getShared = true): \App\Modules\Explore\Services\ExploreService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('exploreService');
+        }
+
+        return new \App\Modules\Explore\Services\ExploreService(
+            new \App\Modules\Explore\Repositories\ExploreRepository(db_connect()),
         );
     }
 

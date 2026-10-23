@@ -512,6 +512,8 @@ body {
 .dc-calendar-legend .delivery i { background: #4f7df5; }
 .dc-calendar-legend .arrival i { background: #20ac70; }
 .dc-calendar-legend .import i { background: #9a56e9; }
+.dc-calendar-legend .purchase i { background: #ef7f31; }
+.dc-calendar-legend .reservation i { background: #4d42db; }
 
 .dc-calendar-grid {
     display: grid;
@@ -587,6 +589,8 @@ body {
 .dc-calendar-event.delivery { color: #3263cd; background: #e7efff; }
 .dc-calendar-event.arrival { color: #168559; background: #ddf7eb; }
 .dc-calendar-event.import { color: #7c39bb; background: #f1e7fc; }
+.dc-calendar-event.purchase { color: #b75116; background: #fff0e5; }
+.dc-calendar-event.reservation { color: #4d42db; background: #ebe9ff; }
 .dc-calendar-event:hover { color: inherit; filter: brightness(.96); }
 
 .dc-arrival-items {
