@@ -148,14 +148,48 @@ final class CatalogService
 
     public function storeImage(int $tenantId, int $productId, UploadedFile $file, bool $primary = true): void
     {
+        if (! $file->isValid() || $file->hasMoved() || ! is_file($file->getTempName())) {
+            throw new \InvalidArgumentException('A imagem selecionada não está mais disponível. Envie o arquivo novamente.');
+        }
+
+        try {
+            $mimeType = $file->getMimeType();
+            $sizeBytes = $file->getSize();
+        } catch (\Throwable) {
+            throw new \InvalidArgumentException('Não foi possível ler a imagem selecionada. Envie o arquivo novamente.');
+        }
+
+        if (! in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'], true) || $sizeBytes === false || $sizeBytes > 5 * 1024 * 1024) {
+            throw new \InvalidArgumentException('A imagem deve ser JPEG, PNG ou WebP válida, com no máximo 5 MB.');
+        }
+
         $directory = WRITEPATH . 'uploads/products/' . $tenantId;
         if (! is_dir($directory)) {
             mkdir($directory, 0700, true);
         }
         $filename = $file->getRandomName();
         $file->move($directory, $filename);
+        $filename = $file->getName();
         $max = (new ProductImageModel())->selectMax('sort_order')->where(['tenant_id' => $tenantId, 'product_id' => $productId])->first();
-        (new ProductImageModel())->insert(['tenant_id' => $tenantId, 'product_id' => $productId, 'path' => 'products/' . $tenantId . '/' . $filename, 'mime_type' => $file->getMimeType(), 'size_bytes' => $file->getSize(), 'sort_order' => ((int) ($max['sort_order'] ?? -1)) + 1, 'is_primary' => $primary ? 1 : 0]);
+        $imagePath = 'products/' . $tenantId . '/' . $filename;
+        $imageId = (new ProductImageModel())->insert([
+            'tenant_id' => $tenantId,
+            'product_id' => $productId,
+            'path' => $imagePath,
+            'mime_type' => $mimeType,
+            'size_bytes' => $sizeBytes,
+            'sort_order' => ((int) ($max['sort_order'] ?? -1)) + 1,
+            'is_primary' => $primary ? 1 : 0,
+        ]);
+
+        if ($imageId === false) {
+            $storedPath = WRITEPATH . 'uploads/' . $imagePath;
+            if (is_file($storedPath)) {
+                unlink($storedPath);
+            }
+
+            throw new \RuntimeException('Não foi possível registrar a imagem da miniatura.');
+        }
     }
 
     /** @param array<string,mixed> $image */
