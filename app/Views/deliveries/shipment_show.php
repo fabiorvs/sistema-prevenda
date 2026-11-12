@@ -114,6 +114,10 @@ $isLate = $shipment['expected_delivery_date']
                         <dd><?= esc($shipment['tracking_code'] ?: 'Não informado') ?></dd>
                     </div>
                     <div>
+                        <dt>Serviço de rastreio</dt>
+                        <dd><?= esc($trackingProviders[$shipment['tracking_provider'] ?? 'none'] ?? 'Não configurado') ?></dd>
+                    </div>
+                    <div>
                         <dt>Data de envio</dt>
                         <dd><?= $shipment['shipped_at'] ? esc(date('d/m/Y', strtotime($shipment['shipped_at']))) : '—' ?></dd>
                     </div>
@@ -132,6 +136,60 @@ $isLate = $shipment['expected_delivery_date']
                     <p class="small text-secondary border-top pt-3 mb-0"><?= nl2br(esc($shipment['notes'])) ?></p>
                 <?php endif ?>
             </section>
+
+            <?php if (($shipment['tracking_provider'] ?? null) && $shipment['tracking_code']): ?>
+                <section class="card card-body mb-4">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div>
+                            <h2 class="dc-detail-card-title mb-1">Consulta de rastreio</h2>
+                            <p class="small text-secondary mb-0">
+                                <?= esc($trackingCarriers[$shipment['tracking_carrier'] ?? ''] ?? $shipment['tracking_carrier'] ?? '') ?>
+                            </p>
+                        </div>
+                        <form method="post" action="/entregas/envios/<?= $shipment['id'] ?>/rastreio">
+                            <?= csrf_field() ?>
+                            <button class="btn btn-outline-primary btn-sm" type="submit">Buscar rastreio</button>
+                        </form>
+                    </div>
+                    <?php foreach ($shipment['tracking_queries'] as $query): ?>
+                        <details class="border-top pt-2 mt-3">
+                            <summary class="small <?= $query['error_message'] ? 'text-danger' : 'text-secondary' ?>">
+                                <?= esc(date('d/m/Y H:i', strtotime($query['created_at']))) ?> ·
+                                <?= $query['error_message'] ? 'consulta com erro' : 'resposta recebida' ?>
+                            </summary>
+                            <?php if ($query['error_message']): ?>
+                                <p class="small text-danger mb-0 mt-2"><?= esc($query['error_message']) ?></p>
+                            <?php elseif ($query['tracking']): ?>
+                                <?php $tracking = $query['tracking']; ?>
+                                <?php if ($tracking['expectedDelivery']): ?>
+                                    <p class="small text-secondary mt-2 mb-2">
+                                        Previsão: <?= esc(date('d/m/Y', strtotime($tracking['expectedDelivery']))) ?>
+                                    </p>
+                                <?php endif ?>
+                                <ol class="small ps-3 mb-0">
+                                    <?php foreach ($tracking['events'] as $event): ?>
+                                        <li class="mb-2">
+                                            <strong><?= esc($event['description']) ?></strong>
+                                            <?php if ($event['location']): ?>
+                                                <span class="text-secondary">· <?= esc($event['location']) ?></span>
+                                            <?php endif ?>
+                                            <?php if ($event['date']): ?>
+                                                <small class="d-block text-secondary">
+                                                    <?= esc(date('d/m/Y H:i', strtotime($event['date']))) ?>
+                                                </small>
+                                            <?php endif ?>
+                                        </li>
+                                    <?php endforeach ?>
+                                </ol>
+                            <?php else: ?>
+                                <p class="small text-secondary mb-0 mt-2">
+                                    A consulta foi concluída, mas o serviço não retornou eventos para exibição.
+                                </p>
+                            <?php endif ?>
+                        </details>
+                    <?php endforeach ?>
+                </section>
+            <?php endif ?>
 
             <section class="card card-body">
                 <h2 class="dc-detail-card-title">Atualizar envio</h2>
@@ -153,6 +211,27 @@ $isLate = $shipment['expected_delivery_date']
                             id="shipment-tracking"
                             name="tracking_code"
                             value="<?= esc($shipment['tracking_code'] ?? '') ?>">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="shipment-tracking-provider">Serviço de rastreio</label>
+                        <select class="form-select" id="shipment-tracking-provider" name="tracking_provider" required>
+                            <?php foreach ($trackingProviders as $value => $label): ?>
+                                <option value="<?= esc($value) ?>" <?= ($shipment['tracking_provider'] ?? 'none') === $value ? 'selected' : '' ?>>
+                                    <?= esc($label) ?>
+                                </option>
+                            <?php endforeach ?>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="shipment-tracking-carrier-group">
+                        <label class="form-label" for="shipment-tracking-carrier">Transportadora no serviço</label>
+                        <select class="form-select" id="shipment-tracking-carrier" name="tracking_carrier">
+                            <option value="">Selecione</option>
+                            <?php foreach ($trackingCarriers as $value => $label): ?>
+                                <option value="<?= esc($value) ?>" <?= ($shipment['tracking_carrier'] ?? '') === $value ? 'selected' : '' ?>>
+                                    <?= esc($label) ?>
+                                </option>
+                            <?php endforeach ?>
+                        </select>
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
@@ -186,5 +265,23 @@ $isLate = $shipment['expected_delivery_date']
         </div>
     </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const provider = document.getElementById('shipment-tracking-provider');
+    const group = document.getElementById('shipment-tracking-carrier-group');
+    const carrier = document.getElementById('shipment-tracking-carrier');
+    const syncCarrier = () => {
+        const enabled = provider.value === 'wonca';
+        group.hidden = ! enabled;
+        carrier.required = enabled;
+        if (! enabled) {
+            carrier.value = '';
+        }
+    };
+    provider.addEventListener('change', syncCarrier);
+    syncCarrier();
+});
+</script>
 
 <?= $this->include('partials/footer') ?>

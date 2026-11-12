@@ -155,6 +155,27 @@
                                 name="tracking_code"
                                 value="<?= esc(old('tracking_code')) ?>">
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="tracking-provider">Serviço de rastreio</label>
+                            <select class="form-select" id="tracking-provider" name="tracking_provider" required>
+                                <?php foreach ($trackingProviders as $value => $label): ?>
+                                    <option value="<?= esc($value) ?>" <?= old('tracking_provider', 'none') === $value ? 'selected' : '' ?>>
+                                        <?= esc($label) ?>
+                                    </option>
+                                <?php endforeach ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="tracking-carrier-group">
+                            <label class="form-label" for="tracking-carrier">Transportadora no serviço</label>
+                            <select class="form-select" id="tracking-carrier" name="tracking_carrier">
+                                <option value="">Selecione</option>
+                                <?php foreach ($trackingCarriers as $value => $label): ?>
+                                    <option value="<?= esc($value) ?>" <?= old('tracking_carrier') === $value ? 'selected' : '' ?>>
+                                        <?= esc($label) ?>
+                                    </option>
+                                <?php endforeach ?>
+                            </select>
+                        </div>
                         <div class="col-md-2">
                             <label class="form-label" for="shipped_at">Data do envio</label>
                             <input class="form-control"
@@ -201,6 +222,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const checkboxes = [...document.querySelectorAll('.shipment-item-check')];
     const selectAll = document.getElementById('select-all-items');
+    const trackingProvider = document.getElementById('tracking-provider');
+    const trackingCarrierGroup = document.getElementById('tracking-carrier-group');
+    const trackingCarrier = document.getElementById('tracking-carrier');
 
     const syncQuantity = (checkbox) => {
         const quantity = checkbox.closest('tr').querySelector('.shipment-item-quantity');
@@ -223,6 +247,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         selectAll.textContent = shouldSelect ? 'Limpar seleção' : 'Selecionar todas';
     });
+
+    const syncTrackingCarrier = () => {
+        const enabled = trackingProvider?.value === 'wonca';
+        trackingCarrierGroup.hidden = ! enabled;
+        trackingCarrier.required = enabled;
+        if (! enabled) {
+            trackingCarrier.value = '';
+        }
+    };
+    trackingProvider?.addEventListener('change', syncTrackingCarrier);
+    syncTrackingCarrier();
 });
 </script>
 

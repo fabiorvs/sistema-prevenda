@@ -38,6 +38,7 @@ $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes
     $routes->post('entregas/envios', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::store');
     $routes->get('entregas/envios/(:num)', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::show/$1');
     $routes->post('entregas/envios/(:num)/status', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::updateStatus/$1');
+    $routes->post('entregas/envios/(:num)/rastreio', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::refreshTracking/$1');
     $routes->get('entregas/(:num)', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::show/$1');
     $routes->post('entregas/(:num)/recebimento', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::receive/$1');
     $routes->get('financeiro', '\\App\\Modules\\Finance\\Controllers\\FinanceController::index');

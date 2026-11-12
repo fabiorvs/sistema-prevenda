@@ -75,6 +75,18 @@ class Services extends BaseService
         );
     }
 
+    public static function shipmentService(bool $getShared = true): \App\Modules\Deliveries\Services\ShipmentService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('shipmentService');
+        }
+
+        return new \App\Modules\Deliveries\Services\ShipmentService(
+            db_connect(),
+            new \App\Modules\Deliveries\Services\WoncaTrackingClient(service('curlrequest'), (string) env('WONKA_KEY', '')),
+        );
+    }
+
     /*
      * public static function example($getShared = true)
      * {

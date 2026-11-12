@@ -27,6 +27,16 @@ final class ShipmentRepository
     }
 
     /** @return list<array<string, mixed>> */
+    public function sellersForTenant(int $tenantId): array
+    {
+        return $this->db->table('sellers')
+            ->where('tenant_id', $tenantId)
+            ->orderBy('name')
+            ->get()
+            ->getResultArray();
+    }
+
+    /** @return list<array<string, mixed>> */
     public function all(int $tenantId): array
     {
         return $this->db->table('shipments')->select('shipments.*, sellers.name AS seller_name, COALESCE(SUM(shipment_items.quantity), 0) AS total_quantity', false)->join('sellers', 'sellers.id = shipments.seller_id')->join('shipment_items', 'shipment_items.shipment_id = shipments.id', 'left')->where('shipments.tenant_id', $tenantId)->groupBy('shipments.id')->orderBy('shipments.created_at', 'DESC')->get()->getResultArray();
@@ -48,6 +58,23 @@ final class ShipmentRepository
     public function updateShipment(int $tenantId, int $shipmentId, array $data): void
     {
         $this->db->table('shipments')->where(['id' => $shipmentId, 'tenant_id' => $tenantId])->update($data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function createTrackingQuery(array $data): void
+    {
+        $this->db->table('shipment_tracking_queries')->insert($data);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function trackingQueriesForShipment(int $tenantId, int $shipmentId): array
+    {
+        return $this->db->table('shipment_tracking_queries')
+            ->where(['tenant_id' => $tenantId, 'shipment_id' => $shipmentId])
+            ->orderBy('id', 'DESC')
+            ->limit(10)
+            ->get()
+            ->getResultArray();
     }
 
     /** @return list<array<string, mixed>> */

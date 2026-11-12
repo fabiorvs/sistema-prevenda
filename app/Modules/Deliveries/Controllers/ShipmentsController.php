@@ -7,7 +7,7 @@ namespace App\Modules\Deliveries\Controllers;
 use App\Controllers\BaseController;
 use App\Modules\Deliveries\Services\ShipmentService;
 use App\Modules\Deliveries\Services\ShipmentStatus;
-use App\Modules\Tenancy\Services\ActiveTenantResolver;
+use App\Modules\Deliveries\Services\TrackingProvider;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 final class ShipmentsController extends BaseController
@@ -16,16 +16,12 @@ final class ShipmentsController extends BaseController
     {
         $tenantId = $this->tenant();
         $sellerId = (int) $this->request->getGet('seller_id');
-        $db = db_connect();
-
         return view('deliveries/shipment_form', [
-            'sellers' => $db->table('sellers')
-                ->where('tenant_id', $tenantId)
-                ->orderBy('name')
-                ->get()
-                ->getResultArray(),
+            'sellers' => $this->service()->sellers($tenantId),
             'sellerId' => $sellerId,
             'items' => $this->service()->eligibleItems($tenantId, $sellerId),
+            'trackingProviders' => TrackingProvider::labels(),
+            'trackingCarriers' => TrackingProvider::carriersFor(TrackingProvider::WONCA),
         ]);
     }
 
@@ -35,6 +31,8 @@ final class ShipmentsController extends BaseController
             'seller_id' => 'required|is_natural_no_zero',
             'carrier' => 'required|max_length[120]',
             'tracking_code' => 'permit_empty|max_length[120]',
+            'tracking_provider' => 'required|in_list[none,wonca]',
+            'tracking_carrier' => 'permit_empty|max_length[80]',
             'shipping_amount' => 'required|decimal|greater_than_equal_to[0]',
             'freight_split' => 'required|in_list[quantity,value]',
             'shipped_at' => 'permit_empty|valid_date[Y-m-d]',
@@ -54,6 +52,8 @@ final class ShipmentsController extends BaseController
                 $this->request->getPost([
                     'carrier',
                     'tracking_code',
+                    'tracking_provider',
+                    'tracking_carrier',
                     'shipping_amount',
                     'freight_split',
                     'shipped_at',
@@ -78,6 +78,8 @@ final class ShipmentsController extends BaseController
         return view('deliveries/shipment_show', [
             'shipment' => $shipment,
             'labels' => ShipmentStatus::labels(),
+            'trackingProviders' => TrackingProvider::labels(),
+            'trackingCarriers' => TrackingProvider::carriersFor(TrackingProvider::WONCA),
         ]);
     }
 
@@ -86,6 +88,8 @@ final class ShipmentsController extends BaseController
         $rules = [
             'status' => 'required|in_list[organized,shipped,received,canceled]',
             'tracking_code' => 'permit_empty|max_length[120]',
+            'tracking_provider' => 'required|in_list[none,wonca]',
+            'tracking_carrier' => 'permit_empty|max_length[80]',
             'shipped_at' => 'permit_empty|valid_date[Y-m-d]',
             'expected_delivery_date' => 'permit_empty|valid_date[Y-m-d]',
             'received_at' => 'permit_empty|valid_date[Y-m-d]',
@@ -99,7 +103,7 @@ final class ShipmentsController extends BaseController
                 $this->tenant(),
                 $id,
                 (string) $this->request->getPost('status'),
-                $this->request->getPost(['tracking_code', 'shipped_at', 'expected_delivery_date', 'received_at']),
+                $this->request->getPost(['tracking_code', 'tracking_provider', 'tracking_carrier', 'shipped_at', 'expected_delivery_date', 'received_at']),
             );
         } catch (\InvalidArgumentException $exception) {
             return redirect()->back()->withInput()->with('errors', ['status' => $exception->getMessage()]);
@@ -108,14 +112,24 @@ final class ShipmentsController extends BaseController
         return redirect()->to('/entregas/envios/' . $id)->with('message', 'Envio atualizado.');
     }
 
+    public function refreshTracking(int $id)
+    {
+        try {
+            $this->service()->refreshTracking($this->tenant(), $id);
+        } catch (\InvalidArgumentException|\RuntimeException $exception) {
+            return redirect()->to('/entregas/envios/' . $id)->with('errors', ['tracking' => $exception->getMessage()]);
+        }
+
+        return redirect()->to('/entregas/envios/' . $id)->with('message', 'Rastreio atualizado.');
+    }
+
     private function tenant(): int
     {
-        return (new ActiveTenantResolver(db_connect(), session()))
-            ->forUser((int) auth()->user()->id);
+        return service('activeTenantResolver')->forUser((int) auth()->user()->id);
     }
 
     private function service(): ShipmentService
     {
-        return new ShipmentService(db_connect());
+        return service('shipmentService');
     }
 }

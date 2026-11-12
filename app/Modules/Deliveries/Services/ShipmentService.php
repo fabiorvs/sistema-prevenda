@@ -11,9 +11,15 @@ final class ShipmentService
 {
     private readonly ShipmentRepository $shipments;
 
-    public function __construct(private readonly BaseConnection $db)
+    public function __construct(private readonly BaseConnection $db, private readonly ?ShipmentTrackingClient $trackingClient = null)
     {
         $this->shipments = new ShipmentRepository($db);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function sellers(int $tenantId): array
+    {
+        return $this->shipments->sellersForTenant($tenantId);
     }
 
     /** @return list<array<string, mixed>> */
@@ -60,6 +66,8 @@ final class ShipmentService
             'reference' => 'ENV-' . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6)),
             'carrier' => trim((string) $data['carrier']),
             'tracking_code' => trim((string) ($data['tracking_code'] ?? '')) ?: null,
+            'tracking_provider' => $this->trackingProvider($data),
+            'tracking_carrier' => $this->trackingCarrier($data),
             'shipping_amount' => number_format($this->money($data['shipping_amount'] ?? 0), 2, '.', ''),
             'status' => ShipmentStatus::ORGANIZED,
             'shipped_at' => $data['shipped_at'] ?: null,
@@ -135,6 +143,13 @@ final class ShipmentService
                 'image_id' => $isGarage ? $row['garage_image_id'] : $row['preorder_image_id'],
             ];
         }, $rows);
+        $shipment['tracking_queries'] = array_map(
+            fn (array $query): array => [
+                ...$query,
+                'tracking' => $this->trackingSummary((string) ($query['response_payload'] ?? '')),
+            ],
+            $this->shipments->trackingQueriesForShipment($tenantId, $shipmentId),
+        );
 
         return $shipment;
     }
@@ -153,6 +168,8 @@ final class ShipmentService
         $updates = [
             'status' => $status,
             'tracking_code' => trim((string) ($data['tracking_code'] ?? '')) ?: null,
+            'tracking_provider' => $this->trackingProvider($data),
+            'tracking_carrier' => $this->trackingCarrier($data),
             'expected_delivery_date' => $data['expected_delivery_date'] ?: null,
             'updated_at' => gmdate('Y-m-d H:i:s'),
         ];
@@ -168,6 +185,55 @@ final class ShipmentService
         $this->syncSourceStatuses($tenantId, $shipmentId, $status, (string) $updates['updated_at']);
         if ($status === ShipmentStatus::RECEIVED) {
             $this->addToCollection($tenantId, $shipmentId, $updates['received_at']);
+        }
+    }
+
+    public function refreshTracking(int $tenantId, int $shipmentId): void
+    {
+        $shipment = $this->shipments->find($tenantId, $shipmentId);
+        if ($shipment === null) {
+            throw new \InvalidArgumentException('Envio não encontrado.');
+        }
+
+        $provider = (string) ($shipment['tracking_provider'] ?? '');
+        $carrier = (string) ($shipment['tracking_carrier'] ?? '');
+        $code = trim((string) ($shipment['tracking_code'] ?? ''));
+        if ($provider === '' || $provider === TrackingProvider::NONE || ! TrackingProvider::isValid($provider)) {
+            throw new \InvalidArgumentException('Selecione um serviço de rastreio para este envio.');
+        }
+        if ($code === '' || ! TrackingProvider::supportsCarrier($provider, $carrier)) {
+            throw new \InvalidArgumentException('Informe um código e uma transportadora compatível com o serviço de rastreio.');
+        }
+        if ($this->trackingClient === null) {
+            throw new \RuntimeException('O cliente de rastreio não está configurado.');
+        }
+
+        $now = gmdate('Y-m-d H:i:s');
+        try {
+            $payload = $this->trackingClient->track($provider, $code, $carrier);
+            $encodedPayload = json_encode($this->unwrapTrackingPayload($payload), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $this->shipments->createTrackingQuery([
+                'tenant_id' => $tenantId,
+                'shipment_id' => $shipmentId,
+                'provider' => $provider,
+                'carrier' => $carrier,
+                'tracking_code' => $code,
+                'response_payload' => mb_substr($encodedPayload, 0, 60000),
+                'error_message' => null,
+                'created_at' => $now,
+            ]);
+        } catch (\Throwable $exception) {
+            $this->shipments->createTrackingQuery([
+                'tenant_id' => $tenantId,
+                'shipment_id' => $shipmentId,
+                'provider' => $provider,
+                'carrier' => $carrier,
+                'tracking_code' => $code,
+                'response_payload' => null,
+                'error_message' => mb_substr($exception->getMessage(), 0, 500),
+                'created_at' => $now,
+            ]);
+            throw new \RuntimeException('Não foi possível atualizar o rastreio.');
         }
     }
 
@@ -305,5 +371,87 @@ final class ShipmentService
     private function money(mixed $value): float
     {
         return round(max(0, (float) str_replace(',', '.', (string) $value)), 2);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function trackingProvider(array $data): ?string
+    {
+        $provider = (string) ($data['tracking_provider'] ?? TrackingProvider::NONE);
+        if (! TrackingProvider::isValid($provider)) {
+            throw new \InvalidArgumentException('Serviço de rastreio inválido.');
+        }
+
+        return $provider === TrackingProvider::NONE ? null : $provider;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function trackingCarrier(array $data): ?string
+    {
+        $provider = (string) ($data['tracking_provider'] ?? TrackingProvider::NONE);
+        $carrier = trim((string) ($data['tracking_carrier'] ?? ''));
+        if (! TrackingProvider::supportsCarrier($provider, $carrier ?: null)) {
+            throw new \InvalidArgumentException('Transportadora incompatível com o serviço de rastreio.');
+        }
+
+        return $carrier ?: null;
+    }
+
+    /** @param array<string, mixed> $payload @return array<string, mixed> */
+    private function unwrapTrackingPayload(array $payload): array
+    {
+        if (! isset($payload['json']) || ! is_string($payload['json'])) {
+            return $payload;
+        }
+
+        $decoded = json_decode($payload['json'], true);
+        if (! is_array($decoded)) {
+            return $payload;
+        }
+
+        $decoded['tracking_status'] = $payload['status'] ?? null;
+
+        return $decoded;
+    }
+
+    /**
+     * @return array{code:string, expectedDelivery:string, events:list<array{date:string, description:string, location:string}>, raw:string}|null
+     */
+    private function trackingSummary(string $encodedPayload): ?array
+    {
+        $payload = json_decode($encodedPayload, true);
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        $payload = $this->unwrapTrackingPayload($payload);
+        $events = [];
+        foreach (($payload['eventos'] ?? []) as $event) {
+            if (! is_array($event)) {
+                continue;
+            }
+
+            $address = $event['unidadeDestino']['endereco'] ?? $event['unidade']['endereco'] ?? [];
+            $location = is_array($address)
+                ? trim(implode('/', array_filter([(string) ($address['cidade'] ?? ''), (string) ($address['uf'] ?? '')])))
+                : '';
+            $date = is_array($event['dtHrCriado'] ?? null)
+                ? (string) ($event['dtHrCriado']['date'] ?? '')
+                : (string) ($event['dtHrCriado'] ?? '');
+            $events[] = [
+                'date' => $date,
+                'description' => (string) ($event['descricaoFrontEnd'] ?? $event['descricao'] ?? 'Atualização de rastreio'),
+                'location' => $location,
+            ];
+        }
+
+        $expectedDelivery = (string) ($payload['dtPrevista'] ?? '');
+        $expectedDate = \DateTimeImmutable::createFromFormat('d/m/Y', $expectedDelivery);
+
+        return [
+            'code' => (string) ($payload['codObjeto'] ?? ''),
+            'expectedDelivery' => $expectedDate ? $expectedDate->format('Y-m-d') : $expectedDelivery,
+            'events' => $events,
+            'raw' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+        ];
     }
 }
