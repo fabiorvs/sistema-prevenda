@@ -150,14 +150,20 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
                 </select>
             </div>
             <div class="col-sm-6 col-xl-2">
-                <label class="form-label" for="table-from">De</label>
-                <input class="form-control" id="table-from" type="date" name="from" value="<?= $hasDateFilter ? esc($filters['from']) : '' ?>">
+                <label class="visually-hidden" for="table-from">De</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white">De</span>
+                    <input class="form-control" id="table-from" type="date" name="from" value="<?= $hasDateFilter ? esc($filters['from']) : '' ?>">
+                </div>
             </div>
             <div class="col-sm-6 col-xl-2">
-                <label class="form-label" for="table-to">Até</label>
-                <input class="form-control" id="table-to" type="date" name="to" value="<?= $hasDateFilter ? esc($filters['to']) : '' ?>">
+                <label class="visually-hidden" for="table-to">Até</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white">Até</span>
+                    <input class="form-control" id="table-to" type="date" name="to" value="<?= $hasDateFilter ? esc($filters['to']) : '' ?>">
+                </div>
             </div>
-            <div class="col-xl-1 d-flex align-items-end">
+            <div class="col-xl-1">
                 <button class="btn btn-primary w-100" type="submit">Filtrar</button>
             </div>
         </div>
