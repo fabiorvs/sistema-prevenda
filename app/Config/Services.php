@@ -89,6 +89,15 @@ class Services extends BaseService
         );
     }
 
+    public static function directPurchaseFinanceEntryFactory(bool $getShared = true): \App\Modules\Finance\Services\DirectPurchaseFinanceEntryFactory
+    {
+        if ($getShared) {
+            return static::getSharedInstance('directPurchaseFinanceEntryFactory');
+        }
+
+        return new \App\Modules\Finance\Services\DirectPurchaseFinanceEntryFactory();
+    }
+
     public static function shipmentService(bool $getShared = true): \App\Modules\Deliveries\Services\ShipmentService
     {
         if ($getShared) {

@@ -7,9 +7,26 @@ $statusLabels = [
     'overdue' => ['Vencido', 'text-bg-danger'],
     'pending' => ['Pendente', 'text-bg-warning'],
 ];
-$paginationParams = array_filter($filters, static fn (string $value): bool => $value !== '');
+$paginationParams = [
+    'q' => $filters['q'],
+    'status' => $filters['status'],
+    'from' => $hasDateFilter ? $filters['from'] : '',
+    'to' => $hasDateFilter ? $filters['to'] : '',
+];
+$paginationParams = array_filter($paginationParams, static fn (string $value): bool => $value !== '');
 $pageUrl = static function (int $page) use ($paginationParams): string {
     return '/financeiro?' . http_build_query($paginationParams + ['page' => $page]);
+};
+$filterUrl = static function (string $status) use ($filters, $hasDateFilter): string {
+    $params = [
+        'q' => $filters['q'],
+        'status' => $status,
+        'from' => $hasDateFilter ? $filters['from'] : '',
+        'to' => $hasDateFilter ? $filters['to'] : '',
+    ];
+    $params = array_filter($params, static fn (string $value): bool => $value !== '');
+
+    return $params === [] ? '/financeiro' : '/financeiro?' . http_build_query($params);
 };
 $firstPage = max(1, $pagination['page'] - 2);
 $lastPage = min($pagination['pages'], $pagination['page'] + 2);
@@ -52,7 +69,7 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
                 <span class="dc-stat-icon success"><i class="bi bi-graph-up-arrow"></i></span>
                 <p class="dc-stat-label">Investido no mês</p>
                 <p class="dc-stat-value">R$ <?= number_format($overview['invested_month'], 2, ',', '.') ?></p>
-                <p class="dc-stat-note">Pagamentos e fretes enviados</p>
+                <p class="dc-stat-note">Compras, pagamentos e fretes enviados</p>
             </section>
         </div>
         <div class="col-sm-6 col-xl-3">
@@ -96,33 +113,33 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
 
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Filtros rápidos de contas">
         <span class="small fw-semibold text-secondary me-1">Mostrar:</span>
-        <a class="btn btn-sm <?= $filters['status'] === '' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro">
+        <a class="btn btn-sm <?= $filters['status'] === '' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="<?= esc($filterUrl('')) ?>">
             Todas
         </a>
-        <a class="btn btn-sm <?= $filters['status'] === 'pending' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=pending">
+        <a class="btn btn-sm <?= $filters['status'] === 'pending' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="<?= esc($filterUrl('pending')) ?>">
             Pendentes
         </a>
-        <a class="btn btn-sm <?= $filters['status'] === 'partial' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=partial">
+        <a class="btn btn-sm <?= $filters['status'] === 'partial' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="<?= esc($filterUrl('partial')) ?>">
             Parciais
         </a>
-        <a class="btn btn-sm <?= $filters['status'] === 'overdue' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=overdue">
+        <a class="btn btn-sm <?= $filters['status'] === 'overdue' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="<?= esc($filterUrl('overdue')) ?>">
             Vencidas
         </a>
-        <a class="btn btn-sm <?= $filters['status'] === 'paid' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/financeiro?status=paid">
+        <a class="btn btn-sm <?= $filters['status'] === 'paid' ? 'btn-primary' : 'btn-outline-secondary' ?>" href="<?= esc($filterUrl('paid')) ?>">
             Pagas
         </a>
     </div>
 
     <form class="card dc-filter-bar mb-3" method="get" action="/financeiro">
         <div class="row g-2">
-            <div class="col-md-8">
+            <div class="col-xl-5">
                 <label class="visually-hidden" for="q">Pesquisar</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
                     <input class="form-control border-start-0" id="q" name="q" value="<?= esc($filters['q']) ?>" placeholder="Pesquisar descrição, origem ou vendedor...">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-xl-2">
                 <label class="visually-hidden" for="status">Status</label>
                 <select class="form-select" id="status" name="status">
                     <option value="">Todos os status</option>
@@ -132,7 +149,15 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
                     <option value="overdue" <?= $filters['status'] === 'overdue' ? 'selected' : '' ?>>Vencido</option>
                 </select>
             </div>
-            <div class="col-md-1">
+            <div class="col-sm-6 col-xl-2">
+                <label class="form-label" for="table-from">De</label>
+                <input class="form-control" id="table-from" type="date" name="from" value="<?= $hasDateFilter ? esc($filters['from']) : '' ?>">
+            </div>
+            <div class="col-sm-6 col-xl-2">
+                <label class="form-label" for="table-to">Até</label>
+                <input class="form-control" id="table-to" type="date" name="to" value="<?= $hasDateFilter ? esc($filters['to']) : '' ?>">
+            </div>
+            <div class="col-xl-1 d-flex align-items-end">
                 <button class="btn btn-primary w-100" type="submit">Filtrar</button>
             </div>
         </div>
@@ -144,7 +169,7 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
                 <h2 class="dc-panel-title mb-1">Contas a pagar</h2>
                 <p class="dc-list-meta mb-0"><?= $pagination['total'] ?> lançamento(s) encontrado(s)</p>
             </div>
-            <?php if ($filters['q'] !== '' || $filters['status'] !== ''): ?>
+            <?php if ($filters['q'] !== '' || $filters['status'] !== '' || $hasDateFilter): ?>
                 <a class="btn btn-sm btn-outline-secondary" href="/financeiro">
                     <i class="bi bi-x-lg me-1"></i> Limpar filtros
                 </a>

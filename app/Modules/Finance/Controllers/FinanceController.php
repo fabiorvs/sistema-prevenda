@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Finance\Controllers;
 
 use App\Controllers\BaseController;
+use App\Modules\Finance\Services\DirectPurchaseFinanceEntryFactory;
 use App\Modules\Tenancy\Services\ActiveTenantResolver;
 
 final class FinanceController extends BaseController
@@ -15,6 +16,7 @@ final class FinanceController extends BaseController
         $search = trim((string) $this->request->getGet('q'));
         $status = (string) $this->request->getGet('status');
         $page = max(1, (int) $this->request->getGet('page'));
+        $hasDateFilter = $this->hasDateFilter('from') || $this->hasDateFilter('to');
         $investmentFrom = $this->dateFilter('from', date('Y-m-01', strtotime('-11 months')));
         $investmentTo = $this->dateFilter('to', date('Y-m-d'));
         if ($investmentFrom > $investmentTo) {
@@ -47,6 +49,11 @@ final class FinanceController extends BaseController
             } else {
                 $query->where('financial_entries.status', $status);
             }
+        }
+        if ($hasDateFilter) {
+            $query
+                ->where('financial_entries.due_date >=', $investmentFrom)
+                ->where('financial_entries.due_date <=', $investmentTo);
         }
 
         $entries = $query->get()->getResultArray();
@@ -81,6 +88,7 @@ final class FinanceController extends BaseController
             ->getResultArray();
 
         foreach ($garageEntries as $garageEntry) {
+            $displayDate = (string) ($garageEntry['next_payment_date'] ?: $garageEntry['acquired_at']);
             $amount = (int) $garageEntry['quantity'] * (float) $garageEntry['unit_price'];
             $entry = [
                 'source' => 'garage',
@@ -88,7 +96,7 @@ final class FinanceController extends BaseController
                 'source_url' => '/garagem/' . $garageEntry['id'],
                 'payment_url' => '/garagem/' . $garageEntry['id'] . '#registrar-pagamento',
                 'due_date' => $garageEntry['next_payment_date'],
-                'display_date' => $garageEntry['next_payment_date'] ?: $garageEntry['acquired_at'],
+                'display_date' => $displayDate,
                 'description' => 'Garagem: ' . $garageEntry['brand'] . ' ' . $garageEntry['product_name'],
                 'seller_name' => $garageEntry['seller_name'],
                 'amount' => $amount,
@@ -103,7 +111,8 @@ final class FinanceController extends BaseController
                 mb_strtolower($search),
             );
             $matchesStatus = $status === '' || $entry['display_status'] === $status;
-            if (! $matchesSearch || ! $matchesStatus) {
+            $matchesDate = ! $hasDateFilter || ($displayDate >= $investmentFrom && $displayDate <= $investmentTo);
+            if (! $matchesSearch || ! $matchesStatus || ! $matchesDate) {
                 continue;
             }
 
@@ -114,6 +123,34 @@ final class FinanceController extends BaseController
             if ($entry['display_status'] === 'overdue') {
                 $summary['overdue'] += (float) $entry['balance'];
             }
+        }
+
+        $directPurchases = db_connect()
+            ->table('direct_purchases')
+            ->select('direct_purchases.id, direct_purchases.purchased_at, direct_purchases.quantity, direct_purchases.unit_price, direct_purchases.store_name, products.name AS product_name, products.brand')
+            ->join('products', 'products.id = direct_purchases.product_id')
+            ->where([
+                'direct_purchases.tenant_id' => $tenantId,
+                'products.tenant_id' => $tenantId,
+            ])
+            ->get()
+            ->getResultArray();
+
+        foreach ($directPurchases as $directPurchase) {
+            $entry = $this->directPurchaseEntryFactory()->fromPurchase($directPurchase);
+            $matchesSearch = $search === '' || str_contains(
+                mb_strtolower($entry['description'] . ' ' . $entry['seller_name']),
+                mb_strtolower($search),
+            );
+            $matchesStatus = $status === '' || $entry['display_status'] === $status;
+            $matchesDate = ! $hasDateFilter || ($entry['display_date'] >= $investmentFrom && $entry['display_date'] <= $investmentTo);
+            if (! $matchesSearch || ! $matchesStatus || ! $matchesDate) {
+                continue;
+            }
+
+            $entries[] = $entry;
+            $summary['total'] += $entry['amount'];
+            $summary['paid'] += $entry['paid_amount'];
         }
 
         usort($entries, static function (array $left, array $right): int {
@@ -190,6 +227,7 @@ final class FinanceController extends BaseController
             'overview' => $overview,
             'investment' => $this->investmentAnalysis($tenantId, $investmentFrom, $investmentTo),
             'filters' => ['q' => $search, 'status' => $status, 'from' => $investmentFrom, 'to' => $investmentTo],
+            'hasDateFilter' => $hasDateFilter,
             'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $totalEntries, 'pages' => $totalPages],
         ]);
     }
@@ -211,6 +249,11 @@ final class FinanceController extends BaseController
     private function tenant(): int
     {
         return (new ActiveTenantResolver(db_connect(), session()))->forUser((int) auth()->user()->id);
+    }
+
+    private function directPurchaseEntryFactory(): DirectPurchaseFinanceEntryFactory
+    {
+        return service('directPurchaseFinanceEntryFactory');
     }
 
     /** @return array{from:string,to:string,total:float,historical_total:float,by_source:array<string,float>,monthly:array{labels:list<string>,values:list<float>}} */
@@ -279,6 +322,11 @@ final class FinanceController extends BaseController
         $value = (string) $this->request->getGet($key);
 
         return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : $default;
+    }
+
+    private function hasDateFilter(string $key): bool
+    {
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $this->request->getGet($key)) === 1;
     }
 
     /**
