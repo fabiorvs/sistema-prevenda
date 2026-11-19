@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Purchases\Controllers;
 
 use App\Controllers\BaseController;
-use App\Modules\Catalog\Services\CatalogService;
 use App\Modules\Purchases\Services\PurchaseService;
-use App\Modules\Tenancy\Services\ActiveTenantResolver;
+use CodeIgniter\Exceptions\PageNotFoundException;
 
 final class PurchasesController extends BaseController
 {
@@ -18,30 +17,70 @@ final class PurchasesController extends BaseController
 
     public function create(): string
     {
-        return view('purchases/form', $this->service()->formData($this->tenant()));
+        return view('purchases/form', $this->service()->formData($this->tenant()) + ['purchase' => null]);
+    }
+
+    public function edit(int $id): string
+    {
+        return view('purchases/form', $this->service()->formData($this->tenant()) + [
+            'purchase' => $this->service()->find($this->tenant(), $id),
+        ]);
     }
 
     public function store()
     {
-        $rules = ['store_name' => 'required|max_length[160]', 'purchased_at' => 'required|valid_date[Y-m-d]', 'quantity' => 'required|is_natural_no_zero', 'unit_price' => 'required|decimal|greater_than[0]', 'image' => 'if_exist|max_size[image,5120]|is_image[image]|mime_in[image,image/jpeg,image/png,image/webp]'];
-        if (! $this->validate($rules)) {
+        if (! $this->validate($this->rules())) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
+
         try {
             $this->service()->register($this->tenant(), $this->request->getPost(), $this->request->getFile('image'));
         } catch (\InvalidArgumentException $exception) {
-            return redirect()->back()->withInput()->with('errors', ['new_product_name' => $exception->getMessage()]);
+            return redirect()->back()->withInput()->with('errors', ['purchase' => $exception->getMessage()]);
         }
+
         return redirect()->to('/compras')->with('message', 'Compra registrada e adicionada à coleção.');
+    }
+
+    public function update(int $id)
+    {
+        if (! $this->validate($this->rules())) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        try {
+            $this->service()->update($this->tenant(), $id, $this->request->getPost(), $this->request->getFile('image'));
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->back()->withInput()->with('errors', ['purchase' => $exception->getMessage()]);
+        }
+
+        return redirect()->to('/compras')->with('message', 'Compra atualizada.');
     }
 
     private function service(): PurchaseService
     {
-        $db = db_connect();
-        return new PurchaseService($db, new CatalogService($db));
+        return service('purchaseService');
     }
+
     private function tenant(): int
     {
-        return (new ActiveTenantResolver(db_connect(), session()))->forUser((int) auth()->user()->id);
+        $tenantId = service('activeTenantResolver')->forUser((int) auth()->user()->id);
+        if ($tenantId === null) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        return $tenantId;
+    }
+
+    /** @return array<string, string> */
+    private function rules(): array
+    {
+        return [
+            'store_name' => 'required|max_length[160]',
+            'purchased_at' => 'required|valid_date[Y-m-d]',
+            'quantity' => 'required|is_natural_no_zero',
+            'unit_price' => 'required|decimal|greater_than[0]',
+            'image' => 'if_exist|max_size[image,5120]|is_image[image]|mime_in[image,image/jpeg,image/png,image/webp]',
+        ];
     }
 }

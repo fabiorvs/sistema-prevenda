@@ -26,4 +26,15 @@ final class CatalogRepository
     {
         $this->db->table('product_images')->where(['tenant_id' => $tenantId, 'product_id' => $productId])->delete();
     }
+
+    public function makeImagePrimary(int $tenantId, int $productId, int $imageId): bool
+    {
+        $this->db->table('product_images')
+            ->where(['tenant_id' => $tenantId, 'product_id' => $productId])
+            ->update(['is_primary' => 0]);
+
+        return $this->db->table('product_images')
+            ->where(['id' => $imageId, 'tenant_id' => $tenantId, 'product_id' => $productId])
+            ->update(['is_primary' => 1]);
+    }
 }

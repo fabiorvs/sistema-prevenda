@@ -146,7 +146,7 @@ final class CatalogService
         return null;
     }
 
-    public function storeImage(int $tenantId, int $productId, UploadedFile $file, bool $primary = true): void
+    public function storeImage(int $tenantId, int $productId, UploadedFile $file, bool $primary = true): int
     {
         if (! $file->isValid() || $file->hasMoved() || ! is_file($file->getTempName())) {
             throw new \InvalidArgumentException('A imagem selecionada não está mais disponível. Envie o arquivo novamente.');
@@ -189,6 +189,18 @@ final class CatalogService
             }
 
             throw new \RuntimeException('Não foi possível registrar a imagem da miniatura.');
+        }
+
+        return (int) $imageId;
+    }
+
+    public function replacePrimaryImage(int $tenantId, int $productId, UploadedFile $file): void
+    {
+        $this->find($tenantId, $productId);
+        $imageId = $this->storeImage($tenantId, $productId, $file, false);
+
+        if (! $this->catalog->makeImagePrimary($tenantId, $productId, $imageId)) {
+            throw new \RuntimeException('Não foi possível definir a nova foto principal da miniatura.');
         }
     }
 

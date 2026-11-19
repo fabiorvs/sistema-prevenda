@@ -38,4 +38,29 @@ final class PurchaseRepository
     {
         $this->db->table('collection_items')->insert($data);
     }
+
+    /** @return array<string, mixed>|null */
+    public function findForTenant(int $tenantId, int $purchaseId): ?array
+    {
+        return $this->db->table('direct_purchases')
+            ->where(['id' => $purchaseId, 'tenant_id' => $tenantId])
+            ->get()
+            ->getRowArray();
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateForTenant(int $tenantId, int $purchaseId, array $data): void
+    {
+        $this->db->table('direct_purchases')
+            ->where(['id' => $purchaseId, 'tenant_id' => $tenantId])
+            ->update($data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateCollectionForPurchase(int $tenantId, int $purchaseId, array $data): void
+    {
+        $this->db->table('collection_items')
+            ->where(['tenant_id' => $tenantId, 'direct_purchase_id' => $purchaseId])
+            ->update($data);
+    }
 }

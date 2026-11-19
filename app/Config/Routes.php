@@ -33,6 +33,8 @@ $routes->group('', ['filter' => ['session', 'tenant']], static function ($routes
     $routes->post('importacoes/(:num)/receber', '\\App\\Modules\\Imports\\Controllers\\ImportsController::receive/$1');
     $routes->get('compras/nova', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::create');
     $routes->post('compras', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::store');
+    $routes->get('compras/(:num)/editar', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::edit/$1');
+    $routes->post('compras/(:num)/editar', '\\App\\Modules\\Purchases\\Controllers\\PurchasesController::update/$1');
     $routes->get('entregas', '\\App\\Modules\\Deliveries\\Controllers\\DeliveriesController::index');
     $routes->get('entregas/envios/novo', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::create');
     $routes->post('entregas/envios', '\\App\\Modules\\Deliveries\\Controllers\\ShipmentsController::store');

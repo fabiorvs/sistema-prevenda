@@ -75,6 +75,20 @@ class Services extends BaseService
         );
     }
 
+    public static function purchaseService(bool $getShared = true): \App\Modules\Purchases\Services\PurchaseService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('purchaseService');
+        }
+
+        $connection = db_connect();
+
+        return new \App\Modules\Purchases\Services\PurchaseService(
+            $connection,
+            new \App\Modules\Catalog\Services\CatalogService($connection),
+        );
+    }
+
     public static function shipmentService(bool $getShared = true): \App\Modules\Deliveries\Services\ShipmentService
     {
         if ($getShared) {
