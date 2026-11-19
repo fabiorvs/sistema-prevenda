@@ -98,6 +98,18 @@ class Services extends BaseService
         return new \App\Modules\Finance\Services\DirectPurchaseFinanceEntryFactory();
     }
 
+    public static function investmentEntryService(bool $getShared = true): \App\Modules\Finance\Services\InvestmentEntryService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('investmentEntryService');
+        }
+
+        return new \App\Modules\Finance\Services\InvestmentEntryService(
+            new \App\Modules\Finance\Repositories\InvestmentEntryRepository(db_connect()),
+            static::directPurchaseFinanceEntryFactory(false),
+        );
+    }
+
     public static function shipmentService(bool $getShared = true): \App\Modules\Deliveries\Services\ShipmentService
     {
         if ($getShared) {

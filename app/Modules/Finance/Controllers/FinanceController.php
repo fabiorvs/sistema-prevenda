@@ -6,6 +6,7 @@ namespace App\Modules\Finance\Controllers;
 
 use App\Controllers\BaseController;
 use App\Modules\Finance\Services\DirectPurchaseFinanceEntryFactory;
+use App\Modules\Finance\Services\InvestmentEntryService;
 use App\Modules\Tenancy\Services\ActiveTenantResolver;
 
 final class FinanceController extends BaseController
@@ -66,6 +67,11 @@ final class FinanceController extends BaseController
             $entry['source_url'] = '/pre-vendas/' . $entry['preorder_id'];
             $entry['payment_url'] = '/financeiro/contas/' . $entry['id'] . '/pagamento';
             $entry['display_date'] = $entry['due_date'];
+
+            if ($hasDateFilter && $entry['display_status'] === 'paid') {
+                continue;
+            }
+
             $summary['total'] += (float) $entry['amount'];
             $summary['paid'] += (float) $entry['paid_amount'];
             $summary['balance'] += (float) $entry['balance'];
@@ -106,6 +112,10 @@ final class FinanceController extends BaseController
             ];
             $entry['display_status'] = $this->displayStatus($entry);
 
+            if ($hasDateFilter && $entry['display_status'] === 'paid') {
+                continue;
+            }
+
             $matchesSearch = $search === '' || str_contains(
                 mb_strtolower($entry['description'] . ' ' . $entry['seller_name']),
                 mb_strtolower($search),
@@ -125,32 +135,48 @@ final class FinanceController extends BaseController
             }
         }
 
-        $directPurchases = db_connect()
-            ->table('direct_purchases')
-            ->select('direct_purchases.id, direct_purchases.purchased_at, direct_purchases.quantity, direct_purchases.unit_price, direct_purchases.store_name, products.name AS product_name, products.brand')
-            ->join('products', 'products.id = direct_purchases.product_id')
-            ->where([
-                'direct_purchases.tenant_id' => $tenantId,
-                'products.tenant_id' => $tenantId,
-            ])
-            ->get()
-            ->getResultArray();
+        if (! $hasDateFilter) {
+            $directPurchases = db_connect()
+                ->table('direct_purchases')
+                ->select('direct_purchases.id, direct_purchases.purchased_at, direct_purchases.quantity, direct_purchases.unit_price, direct_purchases.store_name, products.name AS product_name, products.brand')
+                ->join('products', 'products.id = direct_purchases.product_id')
+                ->where([
+                    'direct_purchases.tenant_id' => $tenantId,
+                    'products.tenant_id' => $tenantId,
+                ])
+                ->get()
+                ->getResultArray();
 
-        foreach ($directPurchases as $directPurchase) {
-            $entry = $this->directPurchaseEntryFactory()->fromPurchase($directPurchase);
-            $matchesSearch = $search === '' || str_contains(
-                mb_strtolower($entry['description'] . ' ' . $entry['seller_name']),
-                mb_strtolower($search),
-            );
-            $matchesStatus = $status === '' || $entry['display_status'] === $status;
-            $matchesDate = ! $hasDateFilter || ($entry['display_date'] >= $investmentFrom && $entry['display_date'] <= $investmentTo);
-            if (! $matchesSearch || ! $matchesStatus || ! $matchesDate) {
-                continue;
+            foreach ($directPurchases as $directPurchase) {
+                $entry = $this->directPurchaseEntryFactory()->fromPurchase($directPurchase);
+                $matchesSearch = $search === '' || str_contains(
+                    mb_strtolower($entry['description'] . ' ' . $entry['seller_name']),
+                    mb_strtolower($search),
+                );
+                $matchesStatus = $status === '' || $entry['display_status'] === $status;
+                if (! $matchesSearch || ! $matchesStatus) {
+                    continue;
+                }
+
+                $entries[] = $entry;
+                $summary['total'] += $entry['amount'];
+                $summary['paid'] += $entry['paid_amount'];
             }
+        } else {
+            foreach ($this->investmentEntryService()->listForPeriod($tenantId, $investmentFrom, $investmentTo) as $entry) {
+                $matchesSearch = $search === '' || str_contains(
+                    mb_strtolower($entry['description'] . ' ' . $entry['seller_name']),
+                    mb_strtolower($search),
+                );
+                $matchesStatus = $status === '' || $entry['display_status'] === $status;
+                if (! $matchesSearch || ! $matchesStatus) {
+                    continue;
+                }
 
-            $entries[] = $entry;
-            $summary['total'] += $entry['amount'];
-            $summary['paid'] += $entry['paid_amount'];
+                $entries[] = $entry;
+                $summary['total'] += $entry['amount'];
+                $summary['paid'] += $entry['paid_amount'];
+            }
         }
 
         usort($entries, static function (array $left, array $right): int {
@@ -254,6 +280,11 @@ final class FinanceController extends BaseController
     private function directPurchaseEntryFactory(): DirectPurchaseFinanceEntryFactory
     {
         return service('directPurchaseFinanceEntryFactory');
+    }
+
+    private function investmentEntryService(): InvestmentEntryService
+    {
+        return service('investmentEntryService');
     }
 
     /** @return array{from:string,to:string,total:float,historical_total:float,by_source:array<string,float>,monthly:array{labels:list<string>,values:list<float>}} */

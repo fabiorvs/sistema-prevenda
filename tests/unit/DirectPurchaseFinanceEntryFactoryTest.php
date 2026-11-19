@@ -33,4 +33,25 @@ final class DirectPurchaseFinanceEntryFactoryTest extends CIUnitTestCase
         self::assertSame(0.0, $entry['balance']);
         self::assertSame('paid', $entry['display_status']);
     }
+
+    public function testCreatesASettledEntryForAFreightExpense(): void
+    {
+        $entry = (new DirectPurchaseFinanceEntryFactory())->fromSettledExpense(
+            'shipment',
+            'Frete',
+            '/entregas/envios/15',
+            '2026-11-12',
+            'Frete do envio ENV-0015',
+            'Transportadora XPTO',
+            36.0,
+        );
+
+        self::assertSame('shipment', $entry['source']);
+        self::assertSame('Frete', $entry['source_label']);
+        self::assertSame('/entregas/envios/15', $entry['source_url']);
+        self::assertSame(36.0, $entry['amount']);
+        self::assertSame(36.0, $entry['paid_amount']);
+        self::assertSame(0.0, $entry['balance']);
+        self::assertSame('paid', $entry['display_status']);
+    }
 }

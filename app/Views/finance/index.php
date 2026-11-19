@@ -172,7 +172,7 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
     <section class="card">
         <div class="card-body border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2 py-3">
             <div>
-                <h2 class="dc-panel-title mb-1">Contas a pagar</h2>
+                <h2 class="dc-panel-title mb-1"><?= $hasDateFilter ? 'Lançamentos no período' : 'Contas a pagar' ?></h2>
                 <p class="dc-list-meta mb-0"><?= $pagination['total'] ?> lançamento(s) encontrado(s)</p>
             </div>
             <?php if ($filters['q'] !== '' || $filters['status'] !== '' || $hasDateFilter): ?>
@@ -185,7 +185,7 @@ $lastPage = min($pagination['pages'], $pagination['page'] + 2);
             <table class="table align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Vencimento / compra</th>
+                        <th><?= $hasDateFilter ? 'Data' : 'Vencimento / compra' ?></th>
                         <th>Descrição</th>
                         <th>Origem</th>
                         <th>Vendedor</th>
