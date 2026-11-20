@@ -8,6 +8,7 @@ use App\Controllers\BaseController;
 use App\Modules\Catalog\Models\ProductImageModel;
 use App\Modules\Garage\Models\GarageItemModel;
 use App\Modules\Garage\Models\GaragePaymentModel;
+use App\Modules\Garage\Services\GarageItemService;
 use App\Modules\Garage\Services\GarageStatus;
 use App\Modules\Tenancy\Services\ActiveTenantResolver;
 use CodeIgniter\Exceptions\PageNotFoundException;
@@ -203,16 +204,28 @@ final class GarageController extends BaseController
 
     public function update(int $id)
     {
-        $rules = ['seller_id' => 'required|is_natural_no_zero', 'unit_price' => 'required|decimal|greater_than[0]', 'acquired_at' => 'required|valid_date[Y-m-d]', 'next_payment_date' => 'permit_empty|valid_date[Y-m-d]'];
+        $rules = [
+            'seller_id' => 'required|is_natural_no_zero',
+            'unit_price' => 'required|decimal|greater_than[0]',
+            'acquired_at' => 'required|valid_date[Y-m-d]',
+            'next_payment_date' => 'permit_empty|valid_date[Y-m-d]',
+            'image' => 'if_exist|max_size[image,5120]|is_image[image]|mime_in[image,image/jpeg,image/png,image/webp]',
+        ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
-        $item = $this->owned($id);
-        $total = (int) $item['quantity'] * $this->money($this->request->getPost('unit_price'));
-        if ($total + 0.0001 < (float) $item['paid']) {
-            return redirect()->back()->withInput()->with('errors', ['unit_price' => 'O valor não pode ser menor que o já pago.']);
+
+        try {
+            $this->garageItemService()->update(
+                $this->tenant(),
+                $id,
+                $this->request->getPost(),
+                $this->request->getFile('image'),
+            );
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->back()->withInput()->with('errors', ['garage' => $exception->getMessage()]);
         }
-        (new GarageItemModel())->update($id, ['seller_id' => (int) $this->request->getPost('seller_id'), 'unit_price' => number_format($this->money($this->request->getPost('unit_price')), 2, '.', ''), 'acquired_at' => $this->request->getPost('acquired_at'), 'next_payment_date' => $this->request->getPost('next_payment_date') ?: null, 'notes' => $this->request->getPost('notes')]);
+
         return redirect()->to('/garagem/' . $id)->with('message', 'Item da garagem atualizado.');
     }
 
@@ -379,5 +392,10 @@ final class GarageController extends BaseController
     private function money(mixed $value): float
     {
         return round(max(0, (float) str_replace(',', '.', (string) $value)), 2);
+    }
+
+    private function garageItemService(): GarageItemService
+    {
+        return service('garageItemService');
     }
 }

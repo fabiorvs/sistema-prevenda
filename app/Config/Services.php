@@ -89,6 +89,22 @@ class Services extends BaseService
         );
     }
 
+    public static function garageItemService(bool $getShared = true): \App\Modules\Garage\Services\GarageItemService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('garageItemService');
+        }
+
+        $connection = db_connect();
+
+        return new \App\Modules\Garage\Services\GarageItemService(
+            new \App\Modules\Garage\Models\GarageItemModel(),
+            new \App\Modules\Garage\Models\GaragePaymentModel(),
+            new \App\Modules\Sellers\Models\SellerModel(),
+            new \App\Modules\Catalog\Services\CatalogService($connection),
+        );
+    }
+
     public static function directPurchaseFinanceEntryFactory(bool $getShared = true): \App\Modules\Finance\Services\DirectPurchaseFinanceEntryFactory
     {
         if ($getShared) {
